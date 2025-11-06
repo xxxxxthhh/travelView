@@ -3,6 +3,7 @@
 .env.local
 .env.production
 config.local.js
+js/config.js
 
 # 日志文件
 *.log

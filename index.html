@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="widt    <script src="js/app.js?v=20250805i"></script>=device-width, initial-scale=1.0">
+    <title>关西旅行可视化 - 演示版</title>
+    <!-- 样式文件 -->
+    <link rel="stylesheet" href="css/main.css?v=20250805b">
+    <link rel="stylesheet" href="css/responsive.css?v=20250805b">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🇯🇵 关西之旅</h1>
+            <p>2024年8月22日 - 8月31日 | 10天9晚深度游</p>
+            <div class="header-stats">
+                <div class="stat-badge">10天行程</div>
+                <div class="stat-badge">5个城市</div>
+                <div class="stat-badge">650公里</div>
+            </div>
+        </div>
+        
+        <div class="main-content">
+            <!-- 时间轴容器 -->
+            <div class="timeline">
+                <div class="loading-spinner">
+                    <div class="spinner"></div>
+                    <div>加载行程数据中...</div>
+                </div>
+            </div>
+            
+            <!-- 地图容器 -->
+            <div class="map-container">
+                <div id="map">
+                    <div class="map-placeholder">
+                        <div class="placeholder-content">
+                            <div class="placeholder-icon">🗺️</div>
+                            <div class="placeholder-title">演示模式</div>
+                            <div class="placeholder-description">
+                                这是一个演示版本，地图功能需要Google Maps API<br>
+                                左侧时间轴功能完全可用
+                                <br><br>
+                                <small>要启用完整地图功能，请配置Google Maps API密钥</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 路线进度指示器 -->
+                <div id="route-progress" class="route-progress" style="display: none;">
+                    <div class="route-progress-icon">🛣️</div>
+                    <div class="route-progress-text">路线构建中...</div>
+                </div>
+                
+                <!-- 地图图例 -->
+                <div class="map-overlay">
+                    <h3>图例</h3>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #ff6b6b;"></div>
+                        <span class="legend-text">⛩️ 景点游览</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4ecdc4;"></div>
+                        <span class="legend-text">🚗 交通出行</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #f9ca24;"></div>
+                        <span class="legend-text">🍽️ 美食体验</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #45b7d1;"></div>
+                        <span class="legend-text">🏨 住宿休息</span>
+                    </div>
+                </div>
+                
+                <!-- 路线统计 -->
+                <div class="route-stats">
+                    <h4>今日统计</h4>
+                    <div class="stat-item">
+                        <span class="stat-label">活动数量</span>
+                        <span class="stat-value">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">预计距离</span>
+                        <span class="stat-value">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">景点参观</span>
+                        <span class="stat-value">-</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">预计用时</span>
+                        <span class="stat-value">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript模块 -->
+    <script src="js/config.js?v=20250805a"></script>
+    <script src="js/maps-loader.js?v=20250805a"></script>
+    <!-- Map utilities and modules -->
+    <script src="js/utils/MapUtils.js?v=20250805f"></script>
+        <script src="js/map/MapManager.js?v=20250805g"></script>
+    <script src="js/map/MarkerManager.js?v=20250805d"></script>
+    <script src="js/map/RouteManager.js?v=20250805e"></script>
+    <!-- Core modules -->
+    <script src="js/timeline.js?v=20250805a"></script>
+    <script src="js/app.js?v=20250805a"></script>
+</body>
+</html>

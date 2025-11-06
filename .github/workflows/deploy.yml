@@ -1,0 +1,90 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # 或者 master，根据你的主分支名称
+  workflow_dispatch:  # 允许手动触发
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 防止并发部署
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Inject Google Maps API Key
+        run: |
+          # 创建动态配置文件，注入环境变量
+          cat > js/config.js << 'EOF'
+          /**
+           * Google Maps API配置
+           * 此文件由 GitHub Actions 自动生成
+           */
+
+          const MAPS_CONFIG = {
+              API_KEY: '${{ secrets.GOOGLE_MAPS_API_KEY }}',
+              LIBRARIES: ['geometry'],
+              DEFAULT_CENTER: { lat: 34.6560, lng: 135.5060 },
+              DEFAULT_ZOOM: 8,
+              ENABLE_MAPS: true
+          };
+
+          const DEMO_CONFIG = {
+              API_KEY: null,
+              ENABLE_MAPS: false,
+              DEMO_MODE: true
+          };
+
+          const CONFIG = (function() {
+              const isLocalhost = window.location.hostname === 'localhost' ||
+                                 window.location.hostname === '127.0.0.1' ||
+                                 window.location.protocol === 'file:';
+
+              const isDemoMode = window.DEMO_MODE === true;
+
+              const hasValidApiKey = MAPS_CONFIG.API_KEY &&
+                                    MAPS_CONFIG.API_KEY !== 'YOUR_GOOGLE_MAPS_API_KEY_HERE' &&
+                                    MAPS_CONFIG.API_KEY !== '';
+
+              if (isDemoMode || !hasValidApiKey) {
+                  console.log('🎭 运行在演示模式下 - 地图功能已禁用');
+                  return DEMO_CONFIG;
+              }
+
+              return MAPS_CONFIG;
+          })();
+
+          if (typeof module !== 'undefined' && module.exports) {
+              module.exports = { CONFIG, MAPS_CONFIG, DEMO_CONFIG };
+          } else {
+              window.MAPS_CONFIG = CONFIG;
+          }
+          EOF
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

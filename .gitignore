@@ -1,0 +1,52 @@
+# API密钥和敏感配置
+.env
+.env.local
+.env.production
+config.local.js
+
+# 日志文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 依赖目录
+node_modules/
+bower_components/
+
+# 构建输出
+dist/
+build/
+
+# 编辑器文件
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+*.tmp
+*.temp
+
+# 缓存
+.cache/
+.npm/
+.yarn/
+
+# 备份文件
+*.bak
+*.backup
+
+# 个人笔记和草稿（不提交到 Git）
+kansai-itinerary-final.md
+notes.md
+TODO.md
+drafts/
+*.draft.md
+*-notes.md
+*-todo.md

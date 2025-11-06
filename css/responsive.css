@@ -1,0 +1,1785 @@
+/* 关西旅行可视化 - 响应式样式 */
+
+/* 超大屏幕适配 (1600px+) */
+@media (min-width: 1600px) {
+    .container {
+        max-width: 1600px;
+    }
+    
+    .timeline {
+        width: 450px;
+    }
+    
+    .header h1 {
+        font-size: 3em;
+    }
+    
+    .header p {
+        font-size: 1.3em;
+    }
+    
+    .day-item {
+        padding: 25px;
+    }
+    
+    .map-overlay {
+        min-width: 320px;
+        padding: 25px;
+    }
+    
+    .route-stats {
+        padding: 25px;
+    }
+}
+
+/* 大屏幕适配 (1200px-1599px) */
+@media (min-width: 1200px) and (max-width: 1599px) {
+    .timeline {
+        width: 420px;
+    }
+    
+    .map-overlay {
+        min-width: 300px;
+    }
+}
+
+/* 平板横屏适配 (768px-1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .container {
+        margin: 10px;
+        border-radius: 15px;
+    }
+    
+    .main-content {
+        flex-direction: row;
+    }
+    
+    .timeline {
+        width: 350px;
+        max-height: none;
+    }
+    
+    .header-stats {
+        gap: 20px;
+    }
+}
+
+/* 平板设备 (768px - 1024px) */
+@media (max-width: 1024px) {
+    body {
+        padding: 15px;
+    }
+    
+    .container {
+        border-radius: 15px;
+    }
+    
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .timeline {
+        width: 100%;
+        max-height: 450px;
+        padding: 20px 15px;
+        border-radius: 0;
+    }
+    
+    .timeline::before {
+        display: none;
+    }
+    
+    .day-item {
+        margin-left: 0;
+    }
+    
+    .day-item::before {
+        display: none;
+    }
+    
+    .map-container {
+        height: 500px;
+        flex: none;
+    }
+    
+    .map-overlay {
+        position: relative;
+        top: 0;
+        right: 0;
+        margin: 20px;
+        width: auto;
+        min-width: auto;
+    }
+    
+    .route-stats {
+        position: relative;
+        bottom: 0;
+        left: 0;
+        margin: 20px;
+        width: auto;
+    }
+    
+    .header-stats {
+        gap: 20px;
+    }
+    
+    .timeline-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: stretch;
+    }
+    
+    .filter-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+}
+
+/* 手机设备 (最大768px) */
+@media (max-width: 768px) {
+    body {
+        padding: 8px;
+    }
+    
+    .container {
+        border-radius: 12px;
+    }
+    
+    .header {
+        padding: 20px 16px;
+    }
+    
+    .header h1 {
+        font-size: 2em;
+        margin-bottom: 8px;
+        line-height: 1.2;
+    }
+    
+    .header p {
+        font-size: 1em;
+        line-height: 1.4;
+    }
+    
+    .header-stats {
+        gap: 12px;
+        margin-top: 16px;
+        justify-content: center;
+    }
+    
+    .stat-badge {
+        padding: 8px 14px;
+        font-size: 0.85em;
+        border-radius: 20px;
+    }
+    
+    .timeline {
+        padding: 16px 12px;
+        max-height: 380px;
+        scroll-behavior: smooth;
+    }
+    
+    .timeline-title {
+        font-size: 1.1em;
+        margin-bottom: 16px;
+    }
+    
+    .filter-btn {
+        padding: 8px 14px;
+        font-size: 0.8em;
+        min-height: 36px;
+        border-radius: 18px;
+    }
+    
+    .day-item {
+        padding: 16px 14px;
+        margin-bottom: 14px;
+        border-radius: 14px;
+        transition: var(--transition);
+    }
+    
+    .day-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 12px;
+        gap: 12px;
+    }
+    
+    .day-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+    
+    .day-number {
+        width: 38px;
+        height: 38px;
+        font-size: 1em;
+        margin-right: 0;
+        flex-shrink: 0;
+    }
+    
+    .day-date {
+        font-size: 1em;
+        font-weight: 600;
+    }
+    
+    .day-title {
+        font-size: 0.85em;
+        color: var(--gray-600);
+        margin-top: 2px;
+    }
+    
+    .day-weather {
+        margin-left: 0;
+        font-size: 1.2em;
+        flex-shrink: 0;
+    }
+    
+    .activity {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 12px 0;
+        border-bottom: 1px solid var(--gray-100);
+    }
+    
+    .activity:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-icon {
+        font-size: 1.2em;
+        width: 24px;
+        text-align: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    
+    .activity-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .activity-main {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-bottom: 6px;
+    }
+    
+    .activity-time {
+        font-size: 0.8em;
+        font-weight: 600;
+        color: var(--primary-color);
+        white-space: nowrap;
+        flex-shrink: 0;
+        background: rgba(102, 126, 234, 0.1);
+        padding: 2px 8px;
+        border-radius: 10px;
+    }
+    
+    .activity-description {
+        font-size: 0.9em;
+        line-height: 1.4;
+        color: var(--gray-800);
+        flex: 1;
+    }
+    
+    .activity-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    .activity-type {
+        font-size: 0.75em;
+        padding: 3px 8px;
+        border-radius: 12px;
+        margin: 0;
+    }
+    
+    .route-distance {
+        font-size: 0.75em;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        margin: 0;
+    }
+    
+    .hotel-info {
+        padding: 14px;
+        font-size: 0.85em;
+        border-radius: 10px;
+        margin-top: 12px;
+        background: rgba(76, 175, 80, 0.1);
+        border-left: 3px solid #4caf50;
+    }
+    
+    .map-container {
+        height: 420px;
+    }
+    
+    .map-overlay {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        left: auto;
+        width: auto;
+        max-width: 280px;
+        min-width: 200px;
+        margin: 0;
+        padding: 16px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .route-stats {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        right: auto;
+        width: auto;
+        max-width: 280px;
+        min-width: 200px;
+        margin: 0;
+        padding: 16px;
+        border-radius: 12px;
+        backdrop-filter: blur(10px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .map-overlay h3 {
+        font-size: 1.1em;
+        margin-bottom: 14px;
+    }
+    
+    .legend-item {
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .legend-text {
+        font-size: 0.85em;
+        line-height: 1.3;
+    }
+    
+    .route-stats h4 {
+        font-size: 1em;
+        margin-bottom: 14px;
+    }
+    
+    .stat-item {
+        font-size: 0.85em;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+    
+    .map-controls {
+        top: 16px;
+        left: 16px;
+        gap: 10px;
+        flex-direction: column;
+    }
+    
+    .control-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.1em;
+        border-radius: 12px;
+        transition: var(--transition);
+    }
+}
+
+/* 小手机设备 (最大480px) */
+@media (max-width: 480px) {
+    body {
+        padding: 6px;
+    }
+    
+    .header {
+        padding: 16px 12px;
+    }
+    
+    .header h1 {
+        font-size: 1.8em;
+        line-height: 1.2;
+    }
+    
+    .header-stats {
+        gap: 8px;
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .stat-badge {
+        padding: 6px 12px;
+        font-size: 0.8em;
+        display: inline-block;
+        margin: 0 4px;
+    }
+    
+    .timeline {
+        padding: 12px 10px;
+        max-height: 320px;
+    }
+    
+    .timeline-header {
+        margin-bottom: 16px;
+        padding: 0;
+    }
+    
+    .timeline-title {
+        font-size: 1em;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+    
+    .filter-buttons {
+        gap: 4px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 6px 10px;
+        font-size: 0.75em;
+        min-height: 32px;
+        border-radius: 16px;
+    }
+    
+    .day-item {
+        padding: 14px 12px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+    }
+    
+    .day-header {
+        margin-bottom: 10px;
+    }
+    
+    .day-number {
+        width: 32px;
+        height: 32px;
+        font-size: 0.9em;
+    }
+    
+    .day-date {
+        font-size: 0.95em;
+    }
+    
+    .day-title {
+        font-size: 0.8em;
+    }
+    
+    .day-weather {
+        font-size: 1.1em;
+    }
+    
+    .activity {
+        padding: 10px 0;
+        gap: 10px;
+    }
+    
+    .activity-icon {
+        font-size: 1.1em;
+        width: 22px;
+    }
+    
+    .activity-main {
+        gap: 6px;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .activity-time {
+        font-size: 0.75em;
+        padding: 2px 6px;
+        order: 2;
+    }
+    
+    .activity-description {
+        font-size: 0.85em;
+        order: 1;
+        margin-bottom: 2px;
+    }
+    
+    .activity-meta {
+        gap: 6px;
+    }
+    
+    .activity-type {
+        font-size: 0.7em;
+        padding: 2px 6px;
+    }
+    
+    .route-distance {
+        font-size: 0.7em;
+        padding: 2px 6px;
+    }
+    
+    .hotel-info {
+        padding: 12px;
+        font-size: 0.8em;
+    }
+    
+    .map-container {
+        height: 340px;
+    }
+    
+    .map-overlay {
+        top: 12px;
+        right: 12px;
+        max-width: calc(100vw - 80px);
+        min-width: 180px;
+        padding: 12px;
+    }
+    
+    .route-stats {
+        bottom: 12px;
+        left: 12px;
+        max-width: calc(100vw - 80px);
+        min-width: 180px;
+        padding: 12px;
+    }
+    
+    .map-overlay h3 {
+        font-size: 1em;
+        margin-bottom: 10px;
+    }
+    
+    .legend-item {
+        margin-bottom: 8px;
+        gap: 8px;
+    }
+    
+    .legend-text {
+        font-size: 0.8em;
+    }
+    
+    .route-stats h4 {
+        font-size: 0.9em;
+        margin-bottom: 10px;
+    }
+    
+    .stat-item {
+        font-size: 0.8em;
+        margin-bottom: 6px;
+    }
+    
+    .map-controls {
+        top: 12px;
+        left: 12px;
+        gap: 8px;
+    }
+    
+    .control-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1em;
+        border-radius: 10px;
+    }
+}
+
+/* 横屏手机优化 */
+@media (max-width: 768px) and (orientation: landscape) {
+    .main-content {
+        flex-direction: row;
+        height: calc(100vh - 200px);
+    }
+    
+    .timeline {
+        width: 340px;
+        max-height: none;
+        height: 100%;
+        border-radius: 0 12px 12px 0;
+    }
+    
+    .map-container {
+        height: auto;
+        flex: 1;
+        position: relative;
+    }
+    
+    .header {
+        padding: 12px 16px;
+    }
+    
+    .header h1 {
+        font-size: 1.6em;
+        margin-bottom: 4px;
+    }
+    
+    .header p {
+        font-size: 0.85em;
+    }
+    
+    .header-stats {
+        margin-top: 8px;
+        gap: 12px;
+        flex-direction: row;
+        justify-content: center;
+    }
+    
+    .stat-badge {
+        padding: 4px 8px;
+        font-size: 0.7em;
+    }
+    
+    .map-overlay {
+        top: 10px;
+        right: 10px;
+        max-width: 200px;
+        min-width: 160px;
+        padding: 10px;
+        font-size: 0.8em;
+    }
+    
+    .route-stats {
+        bottom: 10px;
+        left: 350px;
+        max-width: 200px;
+        min-width: 160px;
+        padding: 10px;
+        font-size: 0.8em;
+    }
+    
+    .map-controls {
+        top: 10px;
+        left: calc(340px + 10px);
+        flex-direction: row;
+        gap: 6px;
+    }
+    
+    .control-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 0.9em;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+    
+    .container {
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    .header {
+        background: #667eea !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .map-container {
+        height: 400px;
+        page-break-inside: avoid;
+    }
+    
+    .map-overlay,
+    .route-stats,
+    .map-controls {
+        display: none;
+    }
+    
+    .timeline {
+        width: 100%;
+        max-height: none;
+        page-break-inside: avoid;
+    }
+    
+    .day-item {
+        page-break-inside: avoid;
+        margin-bottom: 20px;
+    }
+}
+
+/* 移动端性能优化和平滑滚动 */
+@media (max-width: 1024px) {
+    /* 启用硬件加速 */
+    .timeline,
+    .map-container,
+    .day-item,
+    .activity,
+    .filter-btn,
+    .control-btn,
+    .map-overlay,
+    .route-stats {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+        -webkit-backface-visibility: hidden;
+        backface-visibility: hidden;
+    }
+    
+    /* 优化滚动性能 */
+    .timeline {
+        -webkit-overflow-scrolling: touch;
+        overflow-scrolling: touch;
+        scroll-behavior: smooth;
+    }
+    
+    /* 触摸反馈优化 */
+    .day-item,
+    .filter-btn,
+    .control-btn {
+        -webkit-tap-highlight-color: rgba(102, 126, 234, 0.1);
+        tap-highlight-color: rgba(102, 126, 234, 0.1);
+    }
+    
+    /* 减少重绘和回流 */
+    .activity-icon,
+    .day-number,
+    .legend-color {
+        will-change: transform;
+    }
+    
+    /* 优化字体渲染 */
+    body,
+    .timeline,
+    .day-item,
+    .activity {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+}
+
+/* 无障碍支持 */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+    
+    .timeline {
+        scroll-behavior: auto !important;
+        -webkit-overflow-scrolling: auto;
+    }
+    
+    .timeline::before {
+        animation: none;
+    }
+    
+    .day-item:hover,
+    .activity:hover,
+    .filter-btn:hover,
+    .control-btn:hover,
+    .legend-item:hover {
+        transform: none;
+    }
+    
+    .day-item:active,
+    .filter-btn:active,
+    .control-btn:active,
+    .activity:active {
+        transform: none;
+    }
+}
+
+/* 高对比度支持 */
+@media (prefers-contrast: high) {
+    :root {
+        --shadow-sm: 0 4px 15px rgba(0,0,0,0.3);
+        --shadow-md: 0 8px 25px rgba(0,0,0,0.4);
+        --shadow-lg: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    
+    .day-item {
+        border: 2px solid var(--gray-200);
+    }
+    
+    .day-item.active {
+        border-color: var(--accent-color);
+        border-width: 3px;
+    }
+    
+    .activity-type {
+        border: 1px solid currentColor;
+    }
+}
+
+/* 深色主题适配 */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --white: #1a1a1a;
+        --light-bg: #2a2a2a;
+        --gray-100: #333333;
+        --gray-200: #404040;
+        --gray-600: #b0b0b0;
+        --gray-800: #e0e0e0;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    }
+    
+    .map-overlay,
+    .route-stats {
+        background: rgba(26,26,26,0.95);
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .control-btn {
+        background: rgba(26,26,26,0.95);
+        color: var(--gray-800);
+    }
+    
+    .loading-spinner {
+        background: linear-gradient(135deg, #2c3e50, #3498db);
+    }
+}
+
+/* 触摸设备优化 */
+@media (hover: none) and (pointer: coarse) {
+    .day-item,
+    .filter-btn,
+    .control-btn {
+        min-height: 44px; /* iOS 人机界面指南建议的最小触摸目标 */
+    }
+    
+    .activity {
+        min-height: 48px;
+        padding: 12px 8px;
+    }
+    
+    .filter-btn {
+        padding: 10px 16px;
+        font-size: 0.85em;
+        border-radius: 22px;
+        font-weight: 500;
+    }
+    
+    .day-item {
+        padding: 16px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        cursor: pointer;
+    }
+    
+    .day-item:active {
+        transform: scale(0.98);
+        transition: transform 0.1s ease;
+    }
+    
+    .filter-btn:active {
+        transform: scale(0.95);
+        transition: transform 0.1s ease;
+    }
+    
+    .control-btn:active {
+        transform: scale(0.9);
+        transition: transform 0.1s ease;
+    }
+    
+    .day-item:hover,
+    .activity:hover {
+        transform: none;
+    }
+    
+    /* 增加触摸反馈 */
+    .day-item:active {
+        background: rgba(102, 126, 234, 0.05);
+    }
+    
+    .activity:active {
+        background: rgba(102, 126, 234, 0.03);
+    }
+}
+
+/* Focus 样式增强 */
+@media (any-hover: hover) {
+    .day-item:focus,
+    .filter-btn:focus,
+    .control-btn:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+    
+    .timeline:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: -2px;
+    }
+}
+
+/* 平板竖屏适配 */
+@media (min-width: 481px) and (max-width: 767px) {
+    .header {
+        padding: 24px 20px;
+    }
+    
+    .header h1 {
+        font-size: 2.1em;
+        line-height: 1.2;
+    }
+    
+    .header-stats {
+        flex-direction: row;
+        justify-content: center;
+        gap: 16px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-badge {
+        padding: 8px 16px;
+        font-size: 0.85em;
+        border-radius: 20px;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .timeline {
+        padding: 20px 16px;
+        max-height: 420px;
+        scroll-behavior: smooth;
+    }
+    
+    .timeline-header {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-title {
+        text-align: center;
+        font-size: 1.2em;
+    }
+    
+    .filter-buttons {
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .filter-btn {
+        padding: 8px 16px;
+        font-size: 0.8em;
+        min-height: 40px;
+        border-radius: 20px;
+        font-weight: 500;
+    }
+    
+    .day-item {
+        padding: 18px 16px;
+        margin-bottom: 16px;
+        border-radius: 14px;
+        min-height: 44px;
+    }
+    
+    .day-header {
+        flex-wrap: nowrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+    }
+    
+    .day-info {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex: 1;
+    }
+    
+    .day-number {
+        width: 40px;
+        height: 40px;
+        font-size: 1.1em;
+    }
+    
+    .day-weather {
+        margin-left: 0;
+        font-size: 1.3em;
+    }
+    
+    .activity {
+        padding: 10px 0;
+        gap: 12px;
+        min-height: 44px;
+        align-items: flex-start;
+    }
+    
+    .activity-icon {
+        font-size: 1.2em;
+        width: 26px;
+        text-align: center;
+        margin-top: 2px;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-main {
+        gap: 10px;
+        margin-bottom: 8px;
+    }
+    
+    .activity-time {
+        font-size: 0.8em;
+        padding: 3px 10px;
+        border-radius: 12px;
+    }
+    
+    .activity-description {
+        font-size: 0.95em;
+        line-height: 1.4;
+    }
+    
+    .map-container {
+        height: 480px;
+    }
+    
+    .map-overlay {
+        max-width: 300px;
+        padding: 18px;
+    }
+    
+    .route-stats {
+        max-width: 300px;
+        padding: 18px;
+    }
+    
+    .control-btn {
+        width: 46px;
+        height: 46px;
+        font-size: 1.2em;
+    }
+}
+
+/* 中型手机适配 (481px-767px) - 重新定义以提供更好的体验 */
+@media (min-width: 481px) and (max-width: 767px) {
+    /* 这个区间已经在上面定义了 */
+}
+
+/* 手机适配 - 重写以获得更好的触摸体验 */
+@media (max-width: 480px) {
+    body {
+        padding: 6px;
+    }
+    
+    .container {
+        border-radius: 12px;
+        margin: 0;
+    }
+    
+    .header {
+        padding: 16px 14px;
+    }
+    
+    .header h1 {
+        font-size: 1.8em;
+        margin-bottom: 8px;
+        line-height: 1.2;
+    }
+    
+    .header p {
+        font-size: 1em;
+        line-height: 1.3;
+    }
+    
+    .header-stats {
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+        margin-top: 14px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-badge {
+        padding: 6px 12px;
+        font-size: 0.8em;
+        border-radius: 16px;
+        min-height: 32px;
+        display: flex;
+        align-items: center;
+    }
+    
+    .timeline {
+        padding: 16px 12px;
+        max-height: 340px;
+        scroll-behavior: smooth;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .timeline-header {
+        flex-direction: column;
+        gap: 14px;
+        margin-bottom: 18px;
+        align-items: stretch;
+    }
+    
+    .timeline-title {
+        font-size: 1.1em;
+        text-align: center;
+        margin-bottom: 0;
+    }
+    
+    .filter-buttons {
+        justify-content: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .filter-btn {
+        padding: 7px 14px;
+        font-size: 0.75em;
+        min-height: 36px;
+        border-radius: 18px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .day-item {
+        padding: 14px 12px;
+        margin-bottom: 12px;
+        border-radius: 12px;
+        min-height: 44px;
+        transition: var(--transition);
+    }
+    
+    .day-header {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+    
+    .day-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: 1;
+    }
+    
+    .day-number {
+        width: 34px;
+        height: 34px;
+        font-size: 0.9em;
+        margin-right: 0;
+        flex-shrink: 0;
+    }
+    
+    .day-date {
+        font-size: 0.95em;
+        font-weight: 600;
+    }
+    
+    .day-title {
+        font-size: 0.8em;
+        color: var(--gray-600);
+        margin-top: 1px;
+    }
+    
+    .day-weather {
+        margin-left: 0;
+        font-size: 1.1em;
+        flex-shrink: 0;
+    }
+    
+    .activity {
+        display: flex;
+        align-items: flex-start;
+        padding: 10px 0;
+        gap: 10px;
+        min-height: 44px;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .activity:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-icon {
+        font-size: 1.1em;
+        width: 22px;
+        text-align: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+    }
+    
+    .activity-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .activity-main {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 6px;
+    }
+    
+    .activity-description {
+        font-size: 0.85em;
+        line-height: 1.4;
+        order: 1;
+        margin-bottom: 2px;
+    }
+    
+    .activity-time {
+        font-size: 0.75em;
+        font-weight: 600;
+        color: var(--primary-color);
+        background: rgba(102, 126, 234, 0.1);
+        padding: 2px 8px;
+        border-radius: 10px;
+        align-self: flex-start;
+        order: 2;
+    }
+    
+    .activity-meta {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+    
+    .activity-type {
+        font-size: 0.7em;
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin: 0;
+    }
+    
+    .route-distance {
+        font-size: 0.7em;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: var(--gray-100);
+        color: var(--gray-600);
+        margin: 0;
+    }
+    
+    .hotel-info {
+        padding: 12px;
+        font-size: 0.8em;
+        margin-top: 12px;
+        border-radius: 10px;
+        background: rgba(76, 175, 80, 0.1);
+        border-left: 3px solid #4caf50;
+    }
+    
+    .map-container {
+        height: 360px;
+    }
+    
+    .map-overlay {
+        position: static;
+        margin: 14px 10px 0;
+        padding: 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .map-overlay h3 {
+        font-size: 1em;
+        margin-bottom: 12px;
+    }
+    
+    .legend-item {
+        margin-bottom: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .legend-color {
+        width: 18px;
+        height: 3px;
+        border-radius: 2px;
+    }
+    
+    .legend-text {
+        font-size: 0.8em;
+        line-height: 1.3;
+    }
+    
+    .map-controls {
+        top: 12px;
+        left: 12px;
+        gap: 8px;
+        flex-direction: column;
+    }
+    
+    .control-btn {
+        width: 42px;
+        height: 42px;
+        padding: 10px;
+        font-size: 1em;
+        border-radius: 12px;
+        transition: var(--transition);
+    }
+    
+    .route-stats {
+        position: static;
+        margin: 10px;
+        padding: 14px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        box-shadow: var(--shadow-sm);
+    }
+    
+    .route-stats h4 {
+        font-size: 1em;
+        margin-bottom: 12px;
+    }
+    
+    .stat-item {
+        font-size: 0.8em;
+        margin-bottom: 8px;
+        line-height: 1.3;
+    }
+    
+    .stat-value {
+        font-size: 0.9em;
+        font-weight: 600;
+    }
+}
+
+/* 超小屏幕适配 - 优化最小屏幕体验 */
+@media (max-width: 320px) {
+    body {
+        padding: 4px;
+    }
+    
+    .container {
+        border-radius: 10px;
+    }
+    
+    .header {
+        padding: 14px 10px;
+    }
+    
+    .header h1 {
+        font-size: 1.6em;
+        line-height: 1.1;
+    }
+    
+    .header p {
+        font-size: 0.9em;
+        line-height: 1.2;
+    }
+    
+    .header-stats {
+        gap: 6px;
+        margin-top: 12px;
+    }
+    
+    .stat-badge {
+        padding: 5px 10px;
+        font-size: 0.75em;
+        min-height: 28px;
+    }
+    
+    .timeline {
+        padding: 12px 8px;
+        max-height: 280px;
+    }
+    
+    .timeline-title {
+        font-size: 1em;
+    }
+    
+    .filter-buttons {
+        gap: 4px;
+    }
+    
+    .filter-btn {
+        padding: 5px 10px;
+        font-size: 0.7em;
+        min-height: 32px;
+        border-radius: 16px;
+    }
+    
+    .day-item {
+        padding: 12px 10px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+    }
+    
+    .day-header {
+        gap: 8px;
+    }
+    
+    .day-number {
+        width: 30px;
+        height: 30px;
+        font-size: 0.8em;
+    }
+    
+    .day-date {
+        font-size: 0.9em;
+    }
+    
+    .day-title {
+        font-size: 0.75em;
+    }
+    
+    .day-weather {
+        font-size: 1em;
+    }
+    
+    .activity {
+        padding: 8px 0;
+        gap: 8px;
+        min-height: 40px;
+    }
+    
+    .activity-icon {
+        width: 20px;
+        font-size: 1em;
+    }
+    
+    .activity-description {
+        font-size: 0.8em;
+        line-height: 1.3;
+    }
+    
+    .activity-time {
+        font-size: 0.7em;
+        padding: 1px 6px;
+    }
+    
+    .activity-type {
+        font-size: 0.65em;
+        padding: 1px 6px;
+    }
+    
+    .route-distance {
+        font-size: 0.65em;
+        padding: 1px 6px;
+    }
+    
+    .hotel-info {
+        font-size: 0.75em;
+        padding: 10px;
+    }
+    
+    .map-container {
+        height: 280px;
+    }
+    
+    .map-overlay,
+    .route-stats {
+        margin: 8px 6px;
+        padding: 10px;
+        border-radius: 10px;
+    }
+    
+    .map-overlay h3,
+    .route-stats h4 {
+        font-size: 0.9em;
+    }
+    
+    .legend-text,
+    .stat-item {
+        font-size: 0.75em;
+    }
+    
+    .control-btn {
+        width: 38px;
+        height: 38px;
+        font-size: 0.9em;
+    }
+    
+    .map-controls {
+        top: 8px;
+        left: 8px;
+        gap: 6px;
+    }
+}
+
+/* 横屏手机适配 - 优化低高度屏幕 */
+@media (max-height: 500px) and (orientation: landscape) {
+    body {
+        padding: 8px;
+    }
+    
+    .header {
+        padding: 12px 16px;
+    }
+    
+    .header h1 {
+        font-size: 1.6em;
+        margin-bottom: 4px;
+        line-height: 1.1;
+    }
+    
+    .header p {
+        font-size: 0.85em;
+    }
+    
+    .header-stats {
+        margin-top: 8px;
+        gap: 12px;
+        flex-direction: row;
+        justify-content: center;
+    }
+    
+    .stat-badge {
+        padding: 4px 10px;
+        font-size: 0.75em;
+        min-height: 28px;
+    }
+    
+    .main-content {
+        flex-direction: row;
+        min-height: calc(100vh - 180px);
+    }
+    
+    .timeline {
+        width: 300px;
+        max-height: none;
+        padding: 12px 10px;
+        border-radius: 0 10px 10px 0;
+    }
+    
+    .timeline-header {
+        margin-bottom: 12px;
+    }
+    
+    .timeline-title {
+        font-size: 1em;
+    }
+    
+    .filter-btn {
+        padding: 4px 8px;
+        font-size: 0.7em;
+        min-height: 28px;
+    }
+    
+    .day-item {
+        padding: 10px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+    }
+    
+    .day-header {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .day-number {
+        width: 28px;
+        height: 28px;
+        font-size: 0.8em;
+    }
+    
+    .day-date {
+        font-size: 0.85em;
+    }
+    
+    .day-title {
+        font-size: 0.75em;
+    }
+    
+    .day-weather {
+        margin-left: auto;
+        margin-top: 0;
+        font-size: 1em;
+    }
+    
+    .activity {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        min-height: 36px;
+    }
+    
+    .activity-icon {
+        width: 18px;
+        font-size: 0.9em;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-main {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 2px;
+    }
+    
+    .activity-time {
+        font-size: 0.7em;
+        padding: 1px 6px;
+        order: 1;
+    }
+    
+    .activity-description {
+        font-size: 0.8em;
+        order: 2;
+        flex: 1;
+    }
+    
+    .activity-meta {
+        gap: 4px;
+    }
+    
+    .activity-type,
+    .route-distance {
+        font-size: 0.65em;
+        padding: 1px 4px;
+    }
+    
+    .map-container {
+        flex: 1;
+        height: auto;
+        position: relative;
+    }
+    
+    .map-overlay {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        max-width: 180px;
+        min-width: 140px;
+        padding: 10px;
+        font-size: 0.8em;
+    }
+    
+    .route-stats {
+        position: absolute;
+        bottom: 10px;
+        left: 310px;
+        max-width: 180px;
+        min-width: 140px;
+        padding: 10px;
+        font-size: 0.8em;
+    }
+    
+    .map-controls {
+        top: 10px;
+        left: 310px;
+        flex-direction: row;
+        gap: 6px;
+    }
+    
+    .control-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.8em;
+    }
+    
+    .hotel-info {
+        font-size: 0.75em;
+        padding: 8px;
+        margin-top: 8px;
+    }
+}
+
+/* 打印样式 */
+@media print {
+    body {
+        background: white;
+        padding: 0;
+    }
+    
+    .container {
+        box-shadow: none;
+        border-radius: 0;
+    }
+    
+    .header {
+        background: #f5f5f5 !important;
+        color: black !important;
+        page-break-after: avoid;
+    }
+    
+    .main-content {
+        flex-direction: column;
+    }
+    
+    .timeline {
+        width: 100%;
+        max-height: none;
+        background: white;
+    }
+    
+    .day-item {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    
+    .map-container {
+        display: none;
+    }
+    
+    .map-overlay,
+    .route-stats,
+    .map-controls {
+        display: none;
+    }
+    
+    .filter-buttons {
+        display: none;
+    }
+}
+
+/* 高对比度模式支持 */
+@media (prefers-contrast: high) {
+    :root {
+        --primary-color: #0000cc;
+        --accent-color: #cc0000;
+        --gray-600: #000000;
+        --gray-800: #000000;
+    }
+    
+    .day-item {
+        border: 2px solid #000000;
+    }
+    
+    .activity:hover {
+        background: #ffff00;
+        color: #000000;
+    }
+}
+
+/* 减少动画偏好支持 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+    
+    .day-item:hover,
+    .activity:hover,
+    .control-btn:hover {
+        transform: none;
+    }
+}

@@ -1,0 +1,559 @@
+{
+  "tripInfo": {
+    "title": "关西之旅",
+    "dates": "2024-08-22 至 2024-08-31",
+    "duration": "10天9晚",
+    "cities": ["大阪", "和歌山", "白滨", "京都"],
+    "totalDistance": "约650公里",
+    "transportMethods": ["飞机", "自驾", "电车", "步行"]
+  },
+  "days": [
+    {
+      "day": 1,
+      "date": "2024-08-22",
+      "title": "抵达日",
+      "weather": "☀️",
+      "activities": [
+        {
+          "time": "14:56",
+          "type": "transport",
+          "description": "抵达关西机场",
+          "location": { "lat": 34.4347, "lng": 135.2441 },
+          "icon": "✈️",
+          "notes": "顺利抵达，准备开始关西之旅"
+        },
+        {
+          "time": "17:00",
+          "type": "transport",
+          "description": "机场取车",
+          "location": { "lat": 34.4347, "lng": 135.2441 },
+          "icon": "🚗",
+          "notes": "租车手续顺利"
+        },
+        {
+          "time": "18:30",
+          "type": "transport",
+          "description": "开往和歌山",
+          "location": { "lat": 34.2261, "lng": 135.1675 },
+          "icon": "🚙",
+          "distance": "约65km",
+          "notes": "晚高峰时段，预计1.5小时车程"
+        }
+      ],
+      "accommodation": {
+        "name": "DAIWA ROYNET HOTEL WAKAYAMA CASTLE",
+        "location": { "lat": 34.2307, "lng": 135.1733 },
+        "address": "26-1 Shichibancho, Wakayama, 640-8156, Japan",
+        "rating": 4
+      }
+    },
+    {
+      "day": 2,
+      "date": "2024-08-23",
+      "title": "小玉列车与海岸线",
+      "weather": "🌤️",
+      "activities": [
+        {
+          "time": "09:00",
+          "type": "transport",
+          "description": "从酒店前往贵志站",
+          "location": { "lat": 34.2130, "lng": 135.2090 },
+          "icon": "🚗",
+          "notes": "约30分钟车程"
+        },
+        {
+          "time": "10:00",
+          "type": "sightseeing",
+          "description": "小玉列车体验",
+          "location": { "lat": 34.2130, "lng": 135.2090 },
+          "icon": "🚃",
+          "notes": "著名的猫咪站长列车，往返3小时"
+        },
+        {
+          "time": "13:30",
+          "type": "food",
+          "description": "终点站烤肉午餐",
+          "location": { "lat": 34.2130, "lng": 135.2090 },
+          "icon": "🍖"
+        },
+        {
+          "time": "14:00",
+          "type": "transport",
+          "description": "返回和歌山酒店",
+          "location": { "lat": 34.2307, "lng": 135.1733 },
+          "icon": "🚗",
+          "notes": "约30分钟车程"
+        },
+        {
+          "time": "14:30",
+          "type": "transport",
+          "description": "沿42号国道南下前往白滨",
+          "location": { "lat": 33.6917, "lng": 135.3378 },
+          "icon": "🚗",
+          "distance": "约80km",
+          "notes": "沿42号国道南下，约1.5小时车程。如遇堵车可选择高速公路"
+        },
+        {
+          "time": "16:00",
+          "type": "sightseeing",
+          "description": "白滨海岸景点游览",
+          "location": { "lat": 33.6917, "lng": 135.3378 },
+          "icon": "🏖️"
+        },
+        {
+          "time": "18:00",
+          "type": "transport",
+          "description": "前往Fukuro住宿地",
+          "location": { "lat": 33.4559, "lng": 135.7757 },
+          "icon": "🚗",
+          "notes": "约45分钟车程"
+        }
+      ],
+      "accommodation": {
+        "name": "Fukuro民宿",
+        "location": { "lat": 33.4559, "lng": 135.7757 },
+        "address": "Fukuro, 和歌山县",
+        "rating": 4
+      }
+    },
+    {
+      "day": 3,
+      "date": "2024-08-24",
+      "title": "徒步与本州最南端",
+      "weather": "☀️",
+      "activities": [
+        {
+          "time": "09:30",
+          "type": "sightseeing",
+          "description": "串本町海岸线",
+          "location": { "lat": 33.4383, "lng": 135.7666 },
+          "icon": "🌊",
+          "notes": "日本本州最南端"
+        },
+        {
+          "time": "14:00",
+          "type": "sightseeing",
+          "description": "熊野古道徒步",
+          "location": { "lat": 33.7272, "lng": 135.8897 },
+          "icon": "🥾",
+          "notes": "世界文化遗产，约3小时徒步"
+        },
+        {
+          "time": "18:00",
+          "type": "transport",
+          "description": "抵达浦岛酒店",
+          "location": { "lat": 33.6639, "lng": 135.9450 },
+          "icon": "🏨"
+        }
+      ],
+      "accommodation": {
+        "name": "浦岛酒店",
+        "location": { "lat": 33.6639, "lng": 135.9450 },
+        "address": "纪伊胜浦町",
+        "rating": 5,
+        "notes": "著名的洞窟温泉酒店"
+      }
+    },
+    {
+      "day": 4,
+      "date": "2024-08-25",
+      "title": "纪伊胜浦→那智瀑布→京都",
+      "weather": "🌦️",
+      "activities": [
+        {
+          "time": "06:00",
+          "type": "sightseeing",
+          "description": "纪伊胜浦渔港",
+          "location": { "lat": 33.6639, "lng": 135.9450 },
+          "icon": "🐟",
+          "notes": "金枪鱼拍卖观看"
+        },
+        {
+          "time": "09:00",
+          "type": "sightseeing",
+          "description": "孤独鸟居",
+          "location": { "lat": 33.6694, "lng": 135.8906 },
+          "icon": "💦",
+          "notes": "日本三大名瀑，落差133米"
+        },
+        {
+          "time": "11:00",
+          "type": "transport",
+          "description": "出发前往京都",
+          "location": { "lat": 35.0115, "lng": 135.7478 },
+          "icon": "🚗",
+          "distance": "约290km",
+          "notes": "4小时车程，国道169号山路"
+        },
+        {
+          "time": "16:00",
+          "type": "accommodation",
+          "description": "Minn 二条城京町家check-in",
+          "location": { "lat": 35.0115, "lng": 135.7478 },
+          "icon": "🏨"
+        },
+        {
+          "time": "17:30",
+          "type": "sightseeing",
+          "description": "八坂神社黄昏参拜",
+          "location": { "lat": 35.0033, "lng": 135.7731 },
+          "icon": "⛩️"
+        },
+        {
+          "time": "18:30",
+          "type": "food",
+          "description": "鸭川纳凉床晚餐",
+          "location": { "lat": 35.0103, "lng": 135.7738 },
+          "icon": "🍽️",
+          "notes": "夏季限定，川床料理体验"
+        }
+      ],
+      "accommodation": {
+        "name": "Minn 二条城京町家",
+        "location": { "lat": 35.0115, "lng": 135.7478 },
+        "address": "Minn 二条城京町家",
+        "rating": 5
+      }
+    },
+    {
+      "day": 5,
+      "date": "2024-08-26",
+      "title": "三千院→贵船",
+      "weather": "☁️",
+      "activities": [
+        {
+          "time": "09:00",
+          "type": "transport",
+          "description": "前往大原三千院",
+          "location": { "lat": 35.1203, "lng": 135.7700 },
+          "icon": "🚗",
+          "distance": "约25km",
+          "notes": "京都北部山间，45分钟车程"
+        },
+        {
+          "time": "09:30",
+          "type": "sightseeing",
+          "description": "三千院参拜",
+          "location": { "lat": 35.1203, "lng": 135.7700 },
+          "icon": "�",
+          "notes": "天台宗名刹，苔庭美景"
+        },
+        {
+          "time": "11:30",
+          "type": "transport",
+          "description": "前往贵船",
+          "location": { "lat": 35.1390, "lng": 135.7631 },
+          "icon": "🚗",
+          "distance": "约15km"
+        },
+        {
+          "time": "12:00",
+          "type": "sightseeing",
+          "description": "贵船神社三社巡拜",
+          "location": { "lat": 35.1390, "lng": 135.7631 },
+          "icon": "⛩️",
+          "notes": "恋爱成就圣地，水占卜体验"
+        },
+        {
+          "time": "13:00",
+          "type": "food",
+          "description": "贵船川床料理",
+          "location": { "lat": 35.1390, "lng": 135.7631 },
+          "icon": "🍱",
+          "notes": "夏季限定，溪流上用餐"
+        }
+      ],
+      "accommodation": {
+        "name": "Minn 二条城京町家",
+        "location": { "lat": 35.0115, "lng": 135.7478 },
+        "address": "Minn 二条城京町家",
+        "rating": 5
+      }
+    },
+    {
+      "day": 6,
+      "date": "2024-08-27",
+      "title": "岚山一日游",
+      "weather": "☀️",
+      "activities": [
+        {
+          "time": "09:30",
+          "type": "transport",
+          "description": "前往岚山",
+          "location": { "lat": 35.0094, "lng": 135.6686 },
+          "icon": "🚗",
+          "distance": "约15km"
+        },
+        {
+          "time": "10:00",
+          "type": "entertainment",
+          "description": "嵯峨野观光小火车",
+          "location": { "lat": 35.0094, "lng": 135.6686 },
+          "icon": "🚂",
+          "notes": "保津川溪谷风景，25分钟"
+        },
+        {
+          "time": "11:00",
+          "type": "sightseeing",
+          "description": "渡月桥+嵯峨竹林",
+          "location": { "lat": 35.0094, "lng": 135.6686 },
+          "icon": "�",
+          "notes": "岚山经典景点"
+        },
+        {
+          "time": "12:30",
+          "type": "sightseeing",
+          "description": "天龙寺",
+          "location": { "lat": 35.0156, "lng": 135.6744 },
+          "icon": "�",
+          "notes": "曹源池庭园，世界文化遗产"
+        },
+        {
+          "time": "15:00",
+          "type": "sightseeing",
+          "description": "野宫神社",
+          "location": { "lat": 35.0200, "lng": 135.6747 },
+          "icon": "⛩️",
+          "notes": "恋爱成就，黑木鸟居"
+        },
+        {
+          "time": "19:00",
+          "type": "sightseeing",
+          "description": "二年坂三年坂夜游",
+          "location": { "lat": 34.9956, "lng": 135.7803 },
+          "icon": "�",
+          "notes": "传统建筑群夜景"
+        }
+      ],
+      "accommodation": {
+        "name": "Minn 二条城京町家",
+        "location": { "lat": 35.0115, "lng": 135.7478 },
+        "address": "Minn 二条城京町家",
+        "rating": 5
+      }
+    },
+    {
+      "day": 7,
+      "date": "2024-08-28",
+      "title": "京都→关西机场→大阪",
+      "weather": "🌤️",
+      "activities": [
+        {
+          "time": "06:15",
+          "type": "sightseeing",
+          "description": "清水寺晨拜",
+          "location": { "lat": 34.9948, "lng": 135.7850 },
+          "icon": "⛩️",
+          "notes": "避开人群，清水舞台+京都市景"
+        },
+        {
+          "time": "09:00",
+          "type": "sightseeing",
+          "description": "伏见稻荷大社",
+          "location": { "lat": 34.9671, "lng": 135.7727 },
+          "icon": "�",
+          "notes": "千本鸟居登山"
+        },
+        {
+          "time": "12:00",
+          "type": "transport",
+          "description": "前往大阪酒店",
+          "location": { "lat": 34.6560, "lng": 135.5060 },
+          "icon": "🚗",
+          "distance": "约40km",
+          "notes": "从伏见稻荷前往难波，约1小时车程"
+        },
+        {
+          "time": "13:00",
+          "type": "accommodation",
+          "description": "大阪酒店check-in",
+          "location": { "lat": 34.6560, "lng": 135.5060 },
+          "icon": "🏨",
+          "notes": "先入住酒店，放置行李"
+        },
+        {
+          "time": "14:00",
+          "type": "transport",
+          "description": "前往关西机场还车",
+          "location": { "lat": 34.4347, "lng": 135.2441 },
+          "icon": "🚗",
+          "distance": "约30km",
+          "notes": "结束7天自驾行程"
+        },
+        {
+          "time": "16:15",
+          "type": "transport",
+          "description": "机场→大阪酒店",
+          "location": { "lat": 34.6560, "lng": 135.5060 },
+          "icon": "🚄",
+          "distance": "约45分钟",
+          "notes": "还车后返回酒店"
+        },
+        {
+          "time": "19:00",
+          "type": "food",
+          "description": "道顿堀+心斋桥夜游",
+          "location": { "lat": 34.6686, "lng": 135.5023 },
+          "icon": "🌃",
+          "notes": "大阪夜景+美食"
+        }
+      ],
+      "accommodation": {
+        "name": "Apartment Hotel 11 Namba-Minami Ebisucho-Eki Mae",
+        "location": { "lat": 34.6560, "lng": 135.5060 },
+        "address": "Apartment Hotel 11 Namba-Minami Ebisucho-Eki Mae",
+        "rating": 4
+      }
+    },
+    {
+      "day": 8,
+      "date": "2024-08-29",
+      "title": "环球影城",
+      "weather": "☀️",
+      "activities": [
+        {
+          "time": "08:00",
+          "type": "transport",
+          "description": "前往环球影城",
+          "location": { "lat": 34.6654, "lng": 135.4325 },
+          "icon": "🚌",
+          "distance": "约15km"
+        },
+        {
+          "time": "09:00",
+          "type": "entertainment",
+          "description": "大阪环球影城",
+          "location": { "lat": 34.6654, "lng": 135.4325 },
+          "icon": "�",
+          "notes": "哈利波特魔法世界、小黄人乐园"
+        },
+        {
+          "time": "12:00",
+          "type": "food",
+          "description": "园内午餐",
+          "location": { "lat": 34.6654, "lng": 135.4325 },
+          "icon": "🍔"
+        },
+        {
+          "time": "14:00",
+          "type": "entertainment",
+          "description": "继续游玩项目",
+          "location": { "lat": 34.6654, "lng": 135.4325 },
+          "icon": "�",
+          "notes": "侏罗纪公园、好莱坞区域"
+        },
+        {
+          "time": "19:00",
+          "type": "food",
+          "description": "道顿堀夜宵",
+          "location": { "lat": 34.6686, "lng": 135.5023 },
+          "icon": "🍜",
+          "notes": "心斋桥道顿堀夜景"
+        }
+      ],
+      "accommodation": {
+        "name": "Apartment Hotel 11 Namba-Minami Ebisucho-Eki Mae",
+        "location": { "lat": 34.6560, "lng": 135.5060 },
+        "address": "Apartment Hotel 11 Namba-Minami Ebisucho-Eki Mae",
+        "rating": 4
+      }
+    },
+    {
+      "day": 9,
+      "date": "2024-08-30",
+      "title": "2025世博会",
+      "weather": "🌤️",
+      "activities": [
+        {
+          "time": "09:00",
+          "type": "transport",
+          "description": "前往世博会场",
+          "location": { "lat": 34.6886, "lng": 135.4308 },
+          "icon": "�",
+          "distance": "约20km"
+        },
+        {
+          "time": "10:00",
+          "type": "entertainment",
+          "description": "2025大阪世博会",
+          "location": { "lat": 34.6886, "lng": 135.4308 },
+          "icon": "�",
+          "notes": "未来科技展示、各国文化馆"
+        },
+        {
+          "time": "12:30",
+          "type": "food",
+          "description": "世博会美食广场",
+          "location": { "lat": 34.6886, "lng": 135.4308 },
+          "icon": "�"
+        },
+        {
+          "time": "14:00",
+          "type": "entertainment",
+          "description": "继续参观展馆",
+          "location": { "lat": 34.6886, "lng": 135.4308 },
+          "icon": "🏛️",
+          "notes": "科技创新、可持续发展主题"
+        },
+        {
+          "time": "17:00",
+          "type": "shopping",
+          "description": "世博纪念品",
+          "location": { "lat": 34.6886, "lng": 135.4308 },
+          "icon": "�"
+        }
+      ],
+      "accommodation": {
+        "name": "Apartment Hotel 11 Namba-Minami Ebisucho-Eki Mae",
+        "location": { "lat": 34.6560, "lng": 135.5060 },
+        "address": "Apartment Hotel 11 Namba-Minami Ebisucho-Eki Mae",
+        "rating": 4
+      }
+    },
+    {
+      "day": 10,
+      "date": "2024-08-31",
+      "title": "返程日",
+      "weather": "☀️",
+      "activities": [
+        {
+          "time": "10:00",
+          "type": "shopping",
+          "description": "最后购物时间",
+          "location": { "lat": 34.6560, "lng": 135.5060 },
+          "icon": "🛍️"
+        },
+        {
+          "time": "12:00",
+          "type": "food",
+          "description": "告别午餐",
+          "location": { "lat": 34.6560, "lng": 135.5060 },
+          "icon": "🍱"
+        },
+        {
+          "time": "14:00",
+          "type": "transport",
+          "description": "前往关西机场",
+          "location": { "lat": 34.4347, "lng": 135.2441 },
+          "icon": "🚗",
+          "distance": "约50km"
+        },
+        {
+          "time": "16:00",
+          "type": "transport",
+          "description": "机场还车",
+          "location": { "lat": 34.4347, "lng": 135.2441 },
+          "icon": "🚗"
+        },
+        {
+          "time": "18:30",
+          "type": "transport",
+          "description": "登机返程",
+          "location": { "lat": 34.4347, "lng": 135.2441 },
+          "icon": "✈️",
+          "notes": "结束美好的关西之旅"
+        }
+      ]
+    }
+  ]
+}

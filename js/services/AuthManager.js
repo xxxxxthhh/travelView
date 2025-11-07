@@ -198,15 +198,7 @@ class AuthManager {
     }
 }
 
-// 创建全局实例（在 DOM 加载后初始化）
-let authManager;
+// 导出 AuthManager 类到全局作用域
+window.AuthManager = AuthManager;
 
-document.addEventListener('DOMContentLoaded', () => {
-    if (window.supabaseClient) {
-        authManager = new AuthManager();
-        window.authManager = authManager;
-        console.log('✅ AuthManager initialized');
-    } else {
-        console.error('❌ Supabase client not found. Please check supabase.js configuration.');
-    }
-});
+// Note: AuthManager 实例将由 TravelApp 创建和管理

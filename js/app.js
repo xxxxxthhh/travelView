@@ -149,8 +149,8 @@ class TravelApp {
 
     try {
       // Load trip data from database
-      const tripData = await this.dataManager.loadTripData(trip.id);
-      const routeData = await this.dataManager.loadRouteData(trip.id);
+      const tripData = await this.dataManager.loadTripDataFromDB(trip.id);
+      const routeData = await this.dataManager.loadRouteDataFromDB(trip.id);
 
       if (!tripData || !routeData) {
         this.logger.warn("No data found for trip, using default structure");

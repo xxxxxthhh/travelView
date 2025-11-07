@@ -395,7 +395,7 @@ class DataManager {
      * @param {string} tripId - Trip ID
      * @returns {Promise<Object|null>}
      */
-    async loadTripData(tripId) {
+    async loadTripDataFromDB(tripId) {
         const supabase = this.getSupabaseClient();
         if (!supabase) {
             this.logger.error('Supabase client not available');
@@ -464,7 +464,7 @@ class DataManager {
      * @param {string} tripId - Trip ID
      * @returns {Promise<Object|null>}
      */
-    async loadRouteData(tripId) {
+    async loadRouteDataFromDB(tripId) {
         const supabase = this.getSupabaseClient();
         if (!supabase) {
             this.logger.error('Supabase client not available');

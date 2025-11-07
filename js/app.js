@@ -22,6 +22,7 @@ class TravelApp {
     // Initialize Auth components
     this.authManager = null;
     this.authUI = null;
+    this.tripManagerUI = null;
 
     this.init();
   }
@@ -67,6 +68,13 @@ class TravelApp {
         this.authManager = new AuthManager(window.supabaseClient);
         this.authUI = new AuthUI(this.authManager);
         this.authUI.init();
+
+        // Initialize trip manager UI
+        if (window.TripManagerUI) {
+          this.tripManagerUI = new TripManagerUI(this.authManager, this.dataManager);
+          this.tripManagerUI.init();
+        }
+
         this.logger.info("Authentication components initialized");
       } else {
         this.logger.warn("Supabase client not available, auth disabled");
@@ -96,7 +104,10 @@ class TravelApp {
    */
   async loadUserTrips() {
     this.logger.info("Loading user trips...");
-    // TODO: Implement in next task
+    // Trigger trip manager to load trips
+    if (this.tripManagerUI) {
+      await this.tripManagerUI.loadTrips();
+    }
   }
 
   /**
@@ -104,7 +115,83 @@ class TravelApp {
    */
   clearUserTrips() {
     this.logger.info("Clearing user trips...");
-    // TODO: Implement in next task
+    // Reset to demo data
+    if (this.tripManagerUI) {
+      this.tripManagerUI.currentTrip = null;
+      this.tripManagerUI.trips = [];
+    }
+    // TODO: Reset app to show default demo trip
+  }
+
+  /**
+   * Handle trip changes (when user selects a different trip)
+   */
+  async onTripChanged(trip) {
+    this.logger.info("Trip changed", { trip: trip ? trip.title : null });
+
+    if (!trip) {
+      // No trip selected, show demo data
+      this.logger.info("No trip selected, loading demo data");
+      // TODO: Load demo data
+      return;
+    }
+
+    try {
+      // Load trip data from database
+      const tripData = await this.dataManager.loadTripData(trip.id);
+      const routeData = await this.dataManager.loadRouteData(trip.id);
+
+      if (!tripData || !routeData) {
+        this.logger.warn("No data found for trip, using default structure");
+        // Initialize empty trip structure
+        this.tripData = {
+          tripInfo: {
+            title: trip.title,
+            destination: trip.destination || '',
+            dates: this.formatDateRange(trip.start_date, trip.end_date)
+          },
+          days: []
+        };
+        this.routeData = { routes: [], returnRoute: null };
+      } else {
+        this.tripData = tripData;
+        this.routeData = routeData;
+      }
+
+      // Re-initialize components with new data
+      this.currentDay = 1;
+      this.renderedRoutes.clear();
+      this.lastRenderedDay = 0;
+
+      // Update timeline
+      if (this.timeline) {
+        this.timeline.updateData(this.tripData);
+      }
+
+      // Update map
+      if (this.mapManager) {
+        this.mapManager.clearAll();
+        // TODO: Re-render markers and routes for new trip
+      }
+
+      // Show first day
+      this.showDay(1);
+
+      this.logger.info("Trip data loaded and displayed");
+    } catch (error) {
+      this.logger.error("Failed to load trip data", error);
+      this.showError("加载行程数据失败");
+    }
+  }
+
+  /**
+   * Format date range for display
+   */
+  formatDateRange(startDate, endDate) {
+    if (!startDate && !endDate) return '';
+    const start = startDate ? new Date(startDate).toLocaleDateString('zh-CN') : '';
+    const end = endDate ? new Date(endDate).toLocaleDateString('zh-CN') : '';
+    return end ? `${start} - ${end}` : start;
   }
 
   checkApiKeyStatus() {

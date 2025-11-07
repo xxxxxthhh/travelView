@@ -23,6 +23,7 @@ class TravelApp {
     this.authManager = null;
     this.authUI = null;
     this.tripManagerUI = null;
+    this.routeEditorUI = null;
 
     this.init();
   }
@@ -75,6 +76,12 @@ class TravelApp {
           this.tripManagerUI.init();
         }
 
+        // Initialize route editor UI
+        if (window.RouteEditorUI) {
+          this.routeEditorUI = new RouteEditorUI(this.dataManager, this.tripManagerUI);
+          this.routeEditorUI.init();
+        }
+
         this.logger.info("Authentication components initialized");
       } else {
         this.logger.warn("Supabase client not available, auth disabled");
@@ -119,6 +126,10 @@ class TravelApp {
     if (this.tripManagerUI) {
       this.tripManagerUI.currentTrip = null;
       this.tripManagerUI.trips = [];
+    }
+    // Hide route editor
+    if (this.routeEditorUI) {
+      this.routeEditorUI.hideEditToggle();
     }
     // TODO: Reset app to show default demo trip
   }
@@ -176,6 +187,11 @@ class TravelApp {
 
       // Show first day
       this.showDay(1);
+
+      // Notify route editor
+      if (this.routeEditorUI) {
+        this.routeEditorUI.showEditToggle(trip.id, this.tripData, this.routeData);
+      }
 
       this.logger.info("Trip data loaded and displayed");
     } catch (error) {

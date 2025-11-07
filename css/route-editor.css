@@ -205,6 +205,15 @@
   border-left: 4px solid #3b82f6;
 }
 
+.info-message .message-text,
+.error-message .message-text,
+.warning-message .message-text,
+.success-message .message-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: #1a1a1a;
+}
+
 /* ============================================
    Modal for Activity/Day Editor
    ============================================ */

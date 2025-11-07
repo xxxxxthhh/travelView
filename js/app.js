@@ -8,6 +8,7 @@ const appLogger = createLogger('TravelApp', { level: 'debug' });
 class TravelApp {
   constructor() {
     this.logger = appLogger;
+    this.dataManager = new DataManager({ logger: createLogger('DataManager') });
     this.currentDay = 1;
     this.map = null;
     this.markers = [];
@@ -28,11 +29,10 @@ class TravelApp {
       // 显示API密钥状态
       this.checkApiKeyStatus();
 
-      // 加载数据
-      this.logger.timeStart("Data Loading");
-      await this.loadTripData();
-      await this.loadRouteData();
-      this.logger.timeEnd("Data Loading");
+      // 使用 DataManager 加载所有数据
+      const { tripData, routeData } = await this.dataManager.loadAll();
+      this.tripData = tripData;
+      this.routeData = routeData;
 
       // 初始化组件
       this.initTimeline();
@@ -62,54 +62,8 @@ class TravelApp {
     }
   }
 
-  async loadTripData() {
-    try {
-      console.log("🔄 Loading trip data from JSON file...");
-      const response = await fetch("./data/kansai-trip.json");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      this.tripData = await response.json();
-      console.log("✅ Trip data loaded successfully:", this.tripData);
-
-      // 验证第一天的住宿信息
-      if (
-        this.tripData.days &&
-        this.tripData.days[0] &&
-        this.tripData.days[0].accommodation
-      ) {
-        console.log("🏨 第一天住宿信息:", this.tripData.days[0].accommodation);
-      }
-    } catch (error) {
-      console.warn(
-        "⚠️ Failed to load trip data, using fallback data. Error:",
-        error
-      );
-      // 使用默认数据作为后备
-      this.tripData = this.getFallbackData();
-      console.log("🔄 Using fallback data:", this.tripData);
-    }
-  }
-
-  async loadRouteData() {
-    try {
-      console.log("🔄 Loading route data from JSON file...");
-      const response = await fetch("./data/routes.json");
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      this.routeData = await response.json();
-      console.log("✅ Route data loaded successfully:", this.routeData);
-      console.log(`📊 Total routes: ${this.routeData.routes.length}`);
-    } catch (error) {
-      console.warn(
-        "⚠️ Failed to load route data, will use fallback. Error:",
-        error
-      );
-      // 如果加载失败，routeData 保持 null，getRouteSegments() 会提供后备数据
-      this.routeData = null;
-    }
-  }
+  // 数据加载方法已移至 DataManager 服务类
+  // 旧的 loadTripData() 和 loadRouteData() 方法已被移除
 
   initTimeline() {
     const timeline = new Timeline({

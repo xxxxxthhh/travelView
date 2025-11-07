@@ -167,6 +167,17 @@ class TravelApp {
       }
     });
 
+    // 事件委托 - 处理动态添加的按钮（安全修复：移除内联事件处理器）
+    document.body.addEventListener("click", (e) => {
+      // 处理关闭消息按钮
+      if (e.target.matches('[data-action="close-message"]')) {
+        const messageEl = e.target.closest('.completion-message, .warning-message, .error-message');
+        if (messageEl) {
+          messageEl.remove();
+        }
+      }
+    });
+
     // 控制按钮
     this.setupControlButtons();
   }
@@ -790,7 +801,7 @@ class TravelApp {
                     从关西机场出发，最终回到关西机场，<br>
                     形成了一个完美的环形路线。
                 </p>
-                <button onclick="this.parentElement.remove()" style="
+                <button data-action="close-message" style="
                     background: rgba(255,255,255,0.2);
                     border: 2px solid rgba(255,255,255,0.5);
                     color: white;
@@ -979,7 +990,7 @@ class TravelApp {
                 <div style="font-weight: 600; margin-bottom: 5px;">⚠️ 配置提醒</div>
                 <div style="margin-bottom: 8px;">${message}</div>
                 <div style="font-size: 0.85em; opacity: 0.9;">${suggestion}</div>
-                <button onclick="this.parentElement.remove()" style="
+                <button data-action="close-message" style="
                     background: none;
                     border: none;
                     color: white;
@@ -1015,7 +1026,7 @@ class TravelApp {
                 max-width: 300px;
             ">
                 ${message}
-                <button onclick="this.parentElement.remove()" style="
+                <button data-action="close-message" style="
                     background: none;
                     border: none;
                     color: white;

@@ -9,6 +9,7 @@ class TravelApp {
     this.markers = [];
     this.routes = [];
     this.tripData = null;
+    this.routeData = null; // 路由数据
     this.filterType = "all";
     this.renderedRoutes = new Set(); // 跟踪已渲染的路线
     this.lastRenderedDay = 0; // 记录上次渲染到的天数
@@ -23,6 +24,7 @@ class TravelApp {
 
       // 加载数据
       await this.loadTripData();
+      await this.loadRouteData();
 
       // 初始化组件
       this.initTimeline();
@@ -78,6 +80,26 @@ class TravelApp {
       // 使用默认数据作为后备
       this.tripData = this.getFallbackData();
       console.log("🔄 Using fallback data:", this.tripData);
+    }
+  }
+
+  async loadRouteData() {
+    try {
+      console.log("🔄 Loading route data from JSON file...");
+      const response = await fetch("./data/routes.json");
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      this.routeData = await response.json();
+      console.log("✅ Route data loaded successfully:", this.routeData);
+      console.log(`📊 Total routes: ${this.routeData.routes.length}`);
+    } catch (error) {
+      console.warn(
+        "⚠️ Failed to load route data, will use fallback. Error:",
+        error
+      );
+      // 如果加载失败，routeData 保持 null，getRouteSegments() 会提供后备数据
+      this.routeData = null;
     }
   }
 
@@ -513,190 +535,188 @@ class TravelApp {
 
   // 获取所有路线段定义
   getRouteSegments() {
+    // 优先使用从 JSON 加载的路由数据
+    if (this.routeData && this.routeData.routes) {
+      console.log(`✅ Using routes from JSON (${this.routeData.routes.length} routes)`);
+      return this.routeData.routes;
+    }
+
+    // 如果 JSON 加载失败，使用硬编码的后备数据
+    console.warn("⚠️ Using fallback hardcoded routes");
     return [
       // D1: 关西机场 → 和歌山
       {
         day: 1,
-        start: { lat: 34.4347, lng: 135.2441 }, // 关西机场
-        end: { lat: 34.2307, lng: 135.1733 }, // DAIWA ROYNET HOTEL WAKAYAMA CASTLE
+        start: { lat: 34.4347, lng: 135.2441 },
+        end: { lat: 34.2307, lng: 135.1733 },
         color: "#e74c3c",
         label: "D1: 关西机场 → 和歌山酒店",
       },
-      // D2: 和歌山 → 小玉列车 → 白滨 → Fukuro住宿
       {
         day: 2,
-        start: { lat: 34.2307, lng: 135.1733 }, // 和歌山酒店
-        end: { lat: 34.2133, lng: 135.3167 }, // 贵志站(小玉站长)
+        start: { lat: 34.2307, lng: 135.1733 },
+        end: { lat: 34.2133, lng: 135.3167 },
         color: "#3498db",
         label: "D2: 和歌山 → 贵志站(小玉列车)",
       },
       {
         day: 2,
-        start: { lat: 34.2307, lng: 135.1733 }, // Hotel
-        end: { lat: 33.6917, lng: 135.3361 }, // 白滨
+        start: { lat: 34.2307, lng: 135.1733 },
+        end: { lat: 33.6917, lng: 135.3361 },
         color: "#3498db",
         label: "D2: 贵志站 → 酒店取车 → 白滨温泉游览",
       },
       {
         day: 2,
-        start: { lat: 33.6917, lng: 135.3361 }, // 白滨
-        end: { lat: 33.4559, lng: 135.7757 }, // Fukuro住宿地
+        start: { lat: 33.6917, lng: 135.3361 },
+        end: { lat: 33.4559, lng: 135.7757 },
         color: "#3498db",
         label: "D2: 白滨 → Fukuro住宿",
       },
-      // D3: Fukuro → 串本 → 熊野 → 纪伊胜浦
       {
         day: 3,
-        start: { lat: 33.4559, lng: 135.7757 }, // Fukuro住宿地
-        end: { lat: 33.4708, lng: 135.7881 }, // 串本桥杭岩
+        start: { lat: 33.4559, lng: 135.7757 },
+        end: { lat: 33.4708, lng: 135.7881 },
         color: "#f39c12",
         label: "D3: Fukuro → 串本(本州最南端)",
       },
       {
         day: 3,
-        start: { lat: 33.4708, lng: 135.7881 }, // 串本
-        end: { lat: 33.6685, lng: 135.9034 }, // 熊野古道（大门板）
+        start: { lat: 33.4708, lng: 135.7881 },
+        end: { lat: 33.6685, lng: 135.9034 },
         color: "#f39c12",
         label: "D3: 串本 → 熊野古道（大门板）",
       },
       {
         day: 3,
-        start: { lat: 33.6685, lng: 135.9034 }, // 熊野古道(那智大社+瀑布)
-        end: { lat: 33.6276, lng: 135.9524 }, // 浦岛温泉(纪伊胜浦)
+        start: { lat: 33.6685, lng: 135.9034 },
+        end: { lat: 33.6276, lng: 135.9524 },
         color: "#f39c12",
         label: "D3: 熊野古道(那智大社+瀑布) → 浦岛温泉(纪伊胜浦)",
       },
-      // D4: 纪伊胜浦 → 孤独鸟居 → 京都
       {
         day: 4,
-        start: { lat: 33.6276, lng: 135.9524 }, // 浦岛温泉(纪伊胜浦)
-        // 33.6351594067096, 135.95028092279622
-        end: { lat: 33.6352, lng: 135.9503 }, // 孤独鸟居
+        start: { lat: 33.6276, lng: 135.9524 },
+        end: { lat: 33.6352, lng: 135.9503 },
         color: "#9b59b6",
         label: "D4: 纪伊胜浦 → 孤独鸟居+金枪鱼市场",
       },
       {
         day: 4,
-        start: { lat: 33.6352, lng: 135.9503 }, // 孤独鸟居
-        end: { lat: 35.0124, lng: 135.7493 }, // 京都
+        start: { lat: 33.6352, lng: 135.9503 },
+        end: { lat: 35.0124, lng: 135.7493 },
         color: "#9b59b6",
         label: "D4: 孤独鸟居 → 京都(长距离)",
       },
-      // D5: 京都 → 大原三千院 → 贵船
       {
         day: 5,
-        start: { lat: 35.0115, lng: 135.7478 }, // Minn 二条城京町家
-        end: { lat: 35.12, lng: 135.7667 }, // 大原三千院
+        start: { lat: 35.0115, lng: 135.7478 },
+        end: { lat: 35.12, lng: 135.7667 },
         color: "#27ae60",
         label: "D5: 京都 → 大原三千院",
       },
       {
         day: 5,
-        start: { lat: 35.12, lng: 135.7667 }, // 三千院
-        end: { lat: 35.1331, lng: 135.7644 }, // 贵船神社
+        start: { lat: 35.12, lng: 135.7667 },
+        end: { lat: 35.1331, lng: 135.7644 },
         color: "#27ae60",
         label: "D5: 三千院 → 贵船神社",
       },
       {
         day: 5,
-        start: { lat: 35.1331, lng: 135.7644 }, // 贵船
-        end: { lat: 35.0115, lng: 135.7478 }, // 返回京都
+        start: { lat: 35.1331, lng: 135.7644 },
+        end: { lat: 35.0115, lng: 135.7478 },
         color: "#27ae60",
         label: "D5: 贵船 → 返回京都",
       },
-      // D6: 京都 → 岚山一日游
       {
         day: 6,
-        start: { lat: 35.0115, lng: 135.7478 }, // Minn 二条城京町家
-        end: { lat: 35.0169, lng: 135.6762 }, // 岚山竹林
+        start: { lat: 35.0115, lng: 135.7478 },
+        end: { lat: 35.0169, lng: 135.6762 },
         color: "#16a085",
         label: "D6: 京都 → 岚山",
       },
       {
         day: 6,
-        start: { lat: 35.0169, lng: 135.6762 }, // 岚山
-        end: { lat: 35.0115, lng: 135.7478 }, // 返回京都
+        start: { lat: 35.0169, lng: 135.6762 },
+        end: { lat: 35.0115, lng: 135.7478 },
         color: "#16a085",
         label: "D6: 岚山 → 返回京都",
       },
-      // D7: 京都 → 清水寺 → 伏见稻荷 → 大阪
       {
         day: 7,
-        start: { lat: 35.0115, lng: 135.7478 }, // Minn 二条城京町家
-        end: { lat: 34.9949, lng: 135.785 }, // 清水寺
+        start: { lat: 35.0115, lng: 135.7478 },
+        end: { lat: 34.9949, lng: 135.785 },
         color: "#c0392b",
         label: "D7: 京都 → 清水寺",
       },
       {
         day: 7,
-        start: { lat: 34.9949, lng: 135.785 }, // 清水寺
-        end: { lat: 34.9671, lng: 135.7727 }, // 伏见稻荷大社
+        start: { lat: 34.9949, lng: 135.785 },
+        end: { lat: 34.9671, lng: 135.7727 },
         color: "#c0392b",
         label: "D7: 清水寺 → 伏见稻荷",
       },
       {
         day: 7,
-        start: { lat: 34.9671, lng: 135.7727 }, // 伏见稻荷
-        end: { lat: 34.6560, lng: 135.5060 }, // 大阪难波酒店
+        start: { lat: 34.9671, lng: 135.7727 },
+        end: { lat: 34.6560, lng: 135.5060 },
         color: "#c0392b",
         label: "D7: 伏见稻荷 → 大阪酒店check-in",
       },
       {
         day: 7,
-        start: { lat: 34.6560, lng: 135.5060 }, // 大阪酒店
-        end: { lat: 34.4347, lng: 135.2441 }, // 关西机场(还车)
+        start: { lat: 34.6560, lng: 135.5060 },
+        end: { lat: 34.4347, lng: 135.2441 },
         color: "#c0392b",
         label: "D7: 大阪酒店 → 关西机场(还车)",
       },
       {
         day: 7,
-        start: { lat: 34.4347, lng: 135.2441 }, // 关西机场
-        end: { lat: 34.6560, lng: 135.5060 }, // 大阪难波
+        start: { lat: 34.4347, lng: 135.2441 },
+        end: { lat: 34.6560, lng: 135.5060 },
         color: "#c0392b",
         label: "D7: 关西机场 → 大阪难波",
       },
-      // D8: 大阪 → 环球影城
       {
         day: 8,
-        start: { lat: 34.6560, lng: 135.5060 }, // 大阪难波
-        end: { lat: 34.6653, lng: 135.4322 }, // 环球影城
+        start: { lat: 34.6560, lng: 135.5060 },
+        end: { lat: 34.6653, lng: 135.4322 },
         color: "#8e44ad",
         label: "D8: 难波 → 环球影城",
       },
       {
         day: 8,
-        start: { lat: 34.6653, lng: 135.4322 }, // 环球影城
-        end: { lat: 34.6560, lng: 135.5060 }, // 返回难波
+        start: { lat: 34.6653, lng: 135.4322 },
+        end: { lat: 34.6560, lng: 135.5060 },
         color: "#8e44ad",
         label: "D8: 环球影城 → 返回难波",
       },
-      // D9: 大阪 → 世博会
       {
         day: 9,
-        start: { lat: 34.6560, lng: 135.5060 }, // 大阪难波
-        end: { lat: 34.65, lng: 135.4167 }, // 2025世博会
+        start: { lat: 34.6560, lng: 135.5060 },
+        end: { lat: 34.65, lng: 135.4167 },
         color: "#2980b9",
         label: "D9: 难波 → 2025世博会",
       },
       {
         day: 9,
-        start: { lat: 34.65, lng: 135.4167 }, // 世博会
-        end: { lat: 34.6560, lng: 135.5060 }, // 返回难波
+        start: { lat: 34.65, lng: 135.4167 },
+        end: { lat: 34.6560, lng: 135.5060 },
         color: "#2980b9",
         label: "D9: 世博会 → 返回难波",
       },
-      // D10: 大阪城 → 机场
       {
         day: 10,
-        start: { lat: 34.6560, lng: 135.5060 }, // 大阪难波
-        end: { lat: 34.6873, lng: 135.5262 }, // 大阪城
+        start: { lat: 34.6560, lng: 135.5060 },
+        end: { lat: 34.6873, lng: 135.5262 },
         color: "#d35400",
         label: "D10: 难波 → 大阪城",
       },
       {
         day: 10,
-        start: { lat: 34.6873, lng: 135.5262 }, // 大阪城
-        end: { lat: 34.6638, lng: 135.5048 }, // 黑门市场
+        start: { lat: 34.6873, lng: 135.5262 },
+        end: { lat: 34.6638, lng: 135.5048 },
         color: "#d35400",
         label: "D10: 大阪城 → 黑门市场",
       },
@@ -710,12 +730,27 @@ class TravelApp {
       return; // 已经添加过返程路线
     }
 
+    // 从 JSON 获取返程路线数据，如果没有则使用默认值
+    let returnRoute;
+    if (this.routeData && this.routeData.returnRoute) {
+      returnRoute = this.routeData.returnRoute;
+      console.log("✅ Using return route from JSON");
+    } else {
+      returnRoute = {
+        start: { lat: 34.6638, lng: 135.5048 },
+        end: { lat: 34.4347, lng: 135.2441 },
+        color: "#95a5a6",
+        label: "D10: 黑门市场 → 关西机场(返程)"
+      };
+      console.warn("⚠️ Using fallback return route");
+    }
+
     const result = await this.mapManager.addCustomRoute(
-      { lat: 34.6638, lng: 135.5048 }, // 黑门市场
-      { lat: 34.4347, lng: 135.2441 }, // 关西机场
+      returnRoute.start,
+      returnRoute.end,
       {
-        color: "#34495e",
-        label: "D10: 黑门市场 → 关西机场(返程)",
+        color: returnRoute.color,
+        label: returnRoute.label,
         strokeWeight: 5,
         strokeOpacity: 0.9,
         routeId: returnRouteId,

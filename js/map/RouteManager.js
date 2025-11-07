@@ -24,6 +24,23 @@ class RouteManager {
 
     init() {
         this.directionsService = new google.maps.DirectionsService();
+
+        // 事件委托 - 处理InfoWindow中的路由切换按钮（安全修复：移除内联事件处理器）
+        document.body.addEventListener('click', (e) => {
+            const action = e.target.dataset.action;
+            const label = e.target.dataset.label;
+
+            if (!action || !label) return;
+
+            // 处理不同的路由操作
+            if (action === 'showAlternativeRoute') {
+                this.showAlternativeRoute(label, e.target);
+            } else if (action === 'switchToAlternativeRoute') {
+                this.switchToAlternativeRoute(label);
+            } else if (action === 'switchToPrimaryRoute') {
+                this.switchToPrimaryRoute(label);
+            }
+        });
     }
 
     async drawRealRoute(segment) {
@@ -222,7 +239,7 @@ class RouteManager {
                 </div>
                 
                 <div style="text-align: center; margin-bottom: 15px;">
-                    <button onclick="window.travelApp.mapManager.routeManager.${otherRouteInfo.buttonAction}('${segmentLabel}')" 
+                    <button data-action="${otherRouteInfo.buttonAction}" data-label="${segmentLabel}"
                             style="background: ${otherRouteInfo.buttonColor}; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                         ${otherRouteInfo.buttonText}
                     </button>
@@ -231,7 +248,7 @@ class RouteManager {
             // 如果是原始路线但没有备选路线，显示获取备选路线的按钮
             content += `
                 <div style="text-align: center; margin-bottom: 15px;">
-                    <button onclick="window.travelApp.mapManager.routeManager.showAlternativeRoute('${segmentLabel}', this)" 
+                    <button data-action="showAlternativeRoute" data-label="${segmentLabel}"
                             style="background: #ff6b6b; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                         🔍 查看备选路线
                     </button>
@@ -349,7 +366,7 @@ class RouteManager {
                                 🚦 实时时间: <strong style="color: ${this.getTrafficColor(altLeg.duration_in_traffic.value, altLeg.duration.value)}">${altLeg.duration_in_traffic.text}</strong>
                             </div>
                         ` : ''}
-                        <button onclick="window.travelApp.mapManager.routeManager.switchToAlternativeRoute('${segmentLabel}')" 
+                        <button data-action="switchToAlternativeRoute" data-label="${segmentLabel}"
                                 style="background: #1a73e8; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-size: 1em; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
                             切换到此路线
                         </button>

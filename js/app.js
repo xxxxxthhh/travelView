@@ -2,8 +2,12 @@
  * 关西旅行可视化应用 - 主应用逻辑
  */
 
+// 创建应用专用的日志器
+const appLogger = createLogger('TravelApp', { level: 'debug' });
+
 class TravelApp {
   constructor() {
+    this.logger = appLogger;
     this.currentDay = 1;
     this.map = null;
     this.markers = [];
@@ -19,12 +23,16 @@ class TravelApp {
 
   async init() {
     try {
+      this.logger.info("Initializing Travel App...");
+
       // 显示API密钥状态
       this.checkApiKeyStatus();
 
       // 加载数据
+      this.logger.timeStart("Data Loading");
       await this.loadTripData();
       await this.loadRouteData();
+      this.logger.timeEnd("Data Loading");
 
       // 初始化组件
       this.initTimeline();
@@ -35,9 +43,9 @@ class TravelApp {
       // 设置初始状态
       this.showDay(1);
 
-      console.log("Travel App initialized successfully");
+      this.logger.info("Travel App initialized successfully");
     } catch (error) {
-      console.error("Failed to initialize app:", error);
+      this.logger.error("Failed to initialize app", error);
       this.showError("应用初始化失败，请刷新页面重试");
     }
   }

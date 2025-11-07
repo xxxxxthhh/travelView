@@ -238,7 +238,7 @@ class TravelApp {
     console.log(`✅ 第${day}天显示完成`);
   }
 
-  // 添加渐进式路线显示功能 - 优化版本
+  // 添加渐进式路线显示功能 - 性能优化版本
   async addProgressiveRoutes(upToDay) {
     if (!this.mapManager) {
       console.warn("🚫 MapManager 未初始化，跳过路线渲染");
@@ -268,11 +268,12 @@ class TravelApp {
       this.lastRenderedDay = 0;
     }
 
-    // 渲染从第1天到目标天数的所有路线
+    // 收集所有需要渲染的路线
     const startDay = 1;
     const endDay = upToDay;
     console.log(`📈 渲染路线: 从第${startDay}天到第${endDay}天`);
 
+    const routesToRender = [];
     for (let day = startDay; day <= endDay; day++) {
       const daySegments = routeSegments.filter(
         (segment) => segment.day === day
@@ -281,54 +282,81 @@ class TravelApp {
 
       for (const segment of daySegments) {
         const routeId = `${segment.day}-${segment.start.lat}-${segment.end.lat}`;
-        console.log(`    - 处理路线: ${segment.label} (ID: ${routeId})`);
 
-        // 避免重复渲染
-        console.log(`    🔍 检查路线ID是否已渲染: ${routeId}`);
-        console.log(
-          `    🔍 当前已渲染路线集合:`,
-          Array.from(this.renderedRoutes)
-        );
-
+        // 只收集未渲染的路线
         if (!this.renderedRoutes.has(routeId)) {
-          console.log(`    ✅ 渲染新路线: ${segment.label}`);
-          try {
-            const result = await this.mapManager.addCustomRoute(
-              segment.start,
-              segment.end,
-              {
-                color: segment.color,
-                label: segment.label,
-                day: segment.day,
-                routeId: routeId,
-              }
-            );
-
-            console.log(`    🔍 addCustomRoute 返回结果:`, result);
-
-            // 只有在成功渲染后才添加到集合
-            if (result === true) {
-              this.renderedRoutes.add(routeId);
-              console.log(`    ✅ 路线渲染成功并添加到集合: ${segment.label}`);
-              console.log(
-                `    🔍 更新后的已渲染路线集合:`,
-                Array.from(this.renderedRoutes)
-              );
-            } else {
-              console.error(
-                `    ❌ 路线渲染失败，返回值: ${result}, 路线: ${segment.label}`
-              );
-            }
-          } catch (error) {
-            console.error(`    ❌ 路线渲染失败: ${segment.label}`, error);
-          }
+          routesToRender.push({ segment, routeId });
         } else {
           console.log(`    ⏭️ 跳过已渲染路线: ${segment.label}`);
-          console.log(`    🔍 该路线ID已存在于集合中: ${routeId}`);
         }
+      }
+    }
 
-        // 添加短暂延迟，让路线绘制更平滑
-        await new Promise((resolve) => setTimeout(resolve, 100));
+    const totalToRender = routesToRender.length;
+    console.log(`📊 需要渲染 ${totalToRender} 条新路线`);
+
+    if (totalToRender === 0) {
+      console.log(`✅ 所有路线已渲染，无需更新`);
+      this.lastRenderedDay = upToDay;
+      return;
+    }
+
+    // 批量渲染 - 每批处理5条路线
+    const BATCH_SIZE = 5;
+    const batches = [];
+    for (let i = 0; i < routesToRender.length; i += BATCH_SIZE) {
+      batches.push(routesToRender.slice(i, i + BATCH_SIZE));
+    }
+
+    console.log(`🚀 开始批量渲染: ${batches.length} 批，每批最多 ${BATCH_SIZE} 条`);
+
+    let renderedCount = 0;
+    for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+      const batch = batches[batchIndex];
+      console.log(`  📦 批次 ${batchIndex + 1}/${batches.length}: 渲染 ${batch.length} 条路线`);
+
+      // 并行渲染当前批次的所有路线
+      const batchPromises = batch.map(async ({ segment, routeId }) => {
+        try {
+          const result = await this.mapManager.addCustomRoute(
+            segment.start,
+            segment.end,
+            {
+              color: segment.color,
+              label: segment.label,
+              day: segment.day,
+              routeId: routeId,
+            }
+          );
+
+          // 只有在成功渲染后才添加到集合
+          if (result === true) {
+            this.renderedRoutes.add(routeId);
+            console.log(`    ✅ 路线渲染成功: ${segment.label}`);
+            return true;
+          } else {
+            console.error(
+              `    ❌ 路线渲染失败，返回值: ${result}, 路线: ${segment.label}`
+            );
+            return false;
+          }
+        } catch (error) {
+          console.error(`    ❌ 路线渲染失败: ${segment.label}`, error);
+          return false;
+        }
+      });
+
+      // 等待当前批次全部完成
+      const results = await Promise.all(batchPromises);
+      renderedCount += results.filter(r => r).length;
+
+      // 更新进度显示
+      const progress = Math.round((renderedCount / totalToRender) * 100);
+      this.updateRouteProgressPercent(progress, renderedCount, totalToRender);
+
+      // 批次间短暂延迟，让地图有时间更新UI
+      if (batchIndex < batches.length - 1) {
+        await new Promise((resolve) => setTimeout(resolve, 50));
       }
     }
 
@@ -336,6 +364,7 @@ class TravelApp {
     this.lastRenderedDay = upToDay;
     console.log(`📊 更新 lastRenderedDay 为: ${this.lastRenderedDay}`);
     console.log(`📊 当前已渲染路线数量: ${this.renderedRoutes.size}`);
+    console.log(`✅ 批量渲染完成: 成功渲染 ${renderedCount}/${totalToRender} 条路线`);
 
     // 如果到了最后一天，连接回起点形成环形
     if (
@@ -449,6 +478,20 @@ class TravelApp {
       setTimeout(() => {
         progressEl.style.display = "none";
       }, 1500);
+    }
+  }
+
+  // 更新路由渲染进度百分比（用于批量渲染时显示实时进度）
+  updateRouteProgressPercent(percent, rendered, total) {
+    const progressEl = document.getElementById("route-progress");
+    if (!progressEl) return;
+
+    const textEl = progressEl.querySelector(".route-progress-text");
+    const iconEl = progressEl.querySelector(".route-progress-icon");
+
+    if (textEl) {
+      iconEl.textContent = "⚡";
+      textEl.textContent = `正在加载路线... ${percent}% (${rendered}/${total})`;
     }
   }
 

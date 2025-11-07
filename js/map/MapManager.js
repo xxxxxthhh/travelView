@@ -300,28 +300,6 @@ class MapManager {
         return this.routeManager ? this.routeManager.routes : [];
     }
 
-    // 兼容性方法 - 添加自定义路线
-    async addCustomRoute(start, end, options = {}) {
-        if (this.routeManager) {
-            // 将参数转换为 RouteManager 期望的格式
-            const routeData = {
-                start: start,
-                end: end,
-                color: options.color || '#667eea',
-                label: options.label || 'Custom Route',
-                day: options.day || 1
-            };
-            return await this.routeManager.addCustomRoute(routeData);
-        }
-    }
-
-    // 兼容性方法 - 清除所有路线
-    clearAllRoutes() {
-        if (this.routeManager) {
-            this.routeManager.clearAllRoutes();
-        }
-    }
-
     // 切换地图样式
     toggleMapStyle() {
         if (!this.map) return;

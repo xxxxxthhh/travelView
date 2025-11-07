@@ -19,12 +19,19 @@ class TravelApp {
     this.renderedRoutes = new Set(); // 跟踪已渲染的路线
     this.lastRenderedDay = 0; // 记录上次渲染到的天数
 
+    // Initialize Auth components
+    this.authManager = null;
+    this.authUI = null;
+
     this.init();
   }
 
   async init() {
     try {
       this.logger.info("Initializing Travel App...");
+
+      // Initialize authentication
+      this.initAuth();
 
       // 显示API密钥状态
       this.checkApiKeyStatus();
@@ -48,6 +55,56 @@ class TravelApp {
       this.logger.error("Failed to initialize app", error);
       this.showError("应用初始化失败，请刷新页面重试");
     }
+  }
+
+  /**
+   * Initialize authentication components
+   */
+  initAuth() {
+    try {
+      // Check if Supabase client is available
+      if (window.supabaseClient && window.AuthManager && window.AuthUI) {
+        this.authManager = new AuthManager(window.supabaseClient);
+        this.authUI = new AuthUI(this.authManager);
+        this.authUI.init();
+        this.logger.info("Authentication components initialized");
+      } else {
+        this.logger.warn("Supabase client not available, auth disabled");
+      }
+    } catch (error) {
+      this.logger.error("Failed to initialize auth", error);
+    }
+  }
+
+  /**
+   * Handle authentication state changes
+   */
+  onAuthStateChanged(user) {
+    this.logger.info("Auth state changed", { user: user ? user.email : null });
+
+    if (user) {
+      // User logged in - load user's trips
+      this.loadUserTrips();
+    } else {
+      // User logged out - clear user's trips
+      this.clearUserTrips();
+    }
+  }
+
+  /**
+   * Load user's trips from Supabase
+   */
+  async loadUserTrips() {
+    this.logger.info("Loading user trips...");
+    // TODO: Implement in next task
+  }
+
+  /**
+   * Clear user's trips
+   */
+  clearUserTrips() {
+    this.logger.info("Clearing user trips...");
+    // TODO: Implement in next task
   }
 
   checkApiKeyStatus() {

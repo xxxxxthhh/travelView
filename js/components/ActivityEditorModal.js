@@ -219,17 +219,47 @@ class ActivityEditorModal {
   /**
    * Initialize place search
    */
-  initPlaceSearch() {
+  async initPlaceSearch() {
     const input = document.getElementById('place-search-input');
     if (!input) return;
 
-    // Check if Google Maps API is available
-    if (!window.google || !window.google.maps || !window.google.maps.places) {
-      this.logger.warn('Google Maps not available, showing manual input');
+    // Check if Maps loader is available
+    if (!window.googleMapsLoader) {
+      this.logger.warn('Google Maps loader not available');
       this.showManualCoordsMode();
       return;
     }
 
+    // Check if Maps is already loaded
+    if (window.googleMapsLoader.isAvailable()) {
+      this.logger.info('Google Maps already loaded, initializing place search');
+      this.initPlaceAutocomplete(input);
+      return;
+    }
+
+    // Try to load Maps API
+    this.logger.info('Waiting for Google Maps API to load...');
+    try {
+      await window.googleMapsLoader.load();
+
+      // Double check Places API is available
+      if (window.google && window.google.maps && window.google.maps.places) {
+        this.logger.info('Google Maps loaded successfully, initializing place search');
+        this.initPlaceAutocomplete(input);
+      } else {
+        this.logger.warn('Google Maps loaded but Places API not available');
+        this.showManualCoordsMode();
+      }
+    } catch (error) {
+      this.logger.warn('Failed to load Google Maps API', error);
+      this.showManualCoordsMode();
+    }
+  }
+
+  /**
+   * Initialize place autocomplete
+   */
+  initPlaceAutocomplete(input) {
     if (!this.placeSearch) {
       this.placeSearch = new PlaceSearchInput({
         inputId: 'place-search-input',

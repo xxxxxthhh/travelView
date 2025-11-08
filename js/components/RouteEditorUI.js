@@ -127,13 +127,13 @@ class RouteEditorUI {
         e.preventDefault();
         const editDay = parseInt(e.target.closest('[data-day]')?.dataset.day);
         const editIndex = parseInt(e.target.closest('[data-activity-index]')?.dataset.activityIndex);
-        if (editDay && editIndex !== undefined) this.editActivity(editDay, editIndex);
+        if (!isNaN(editDay) && !isNaN(editIndex)) this.editActivity(editDay, editIndex);
         break;
       case 'delete-activity':
         e.preventDefault();
         const delDay = parseInt(e.target.closest('[data-day]')?.dataset.day);
         const delIndex = parseInt(e.target.closest('[data-activity-index]')?.dataset.activityIndex);
-        if (delDay && delIndex !== undefined) this.deleteActivity(delDay, delIndex);
+        if (!isNaN(delDay) && !isNaN(delIndex)) this.deleteActivity(delDay, delIndex);
         break;
       case 'save-changes':
         e.preventDefault();

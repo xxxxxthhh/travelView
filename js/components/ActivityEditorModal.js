@@ -223,6 +223,13 @@ class ActivityEditorModal {
     const input = document.getElementById('place-search-input');
     if (!input) return;
 
+    // Check if Google Maps API is available
+    if (!window.google || !window.google.maps || !window.google.maps.places) {
+      this.logger.warn('Google Maps not available, showing manual input');
+      this.showManualCoordsMode();
+      return;
+    }
+
     if (!this.placeSearch) {
       this.placeSearch = new PlaceSearchInput({
         inputId: 'place-search-input',
@@ -233,6 +240,42 @@ class ActivityEditorModal {
     }
 
     this.placeSearch.init(input);
+  }
+
+  /**
+   * Show manual coordinates mode when Google Maps is not available
+   */
+  showManualCoordsMode() {
+    // Hide place search
+    const placeSearchGroup = document.getElementById('place-search-input')?.closest('.form-group');
+    if (placeSearchGroup) {
+      placeSearchGroup.style.display = 'none';
+    }
+
+    // Hide toggle button
+    const toggleDiv = document.getElementById('manual-coords-toggle');
+    if (toggleDiv) {
+      toggleDiv.style.display = 'none';
+    }
+
+    // Show manual coords section
+    const manualSection = document.getElementById('manual-coords-section');
+    if (manualSection) {
+      manualSection.style.display = 'block';
+    }
+
+    // Add helpful message
+    const form = document.getElementById('activity-editor-form');
+    if (form && !document.getElementById('maps-unavailable-notice')) {
+      const notice = document.createElement('div');
+      notice.id = 'maps-unavailable-notice';
+      notice.style.cssText = 'padding: 12px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 8px; margin-bottom: 16px; font-size: 14px; color: #856404;';
+      notice.innerHTML = `
+        <strong>ℹ️ 提示：</strong> 地图服务暂不可用，请手动输入坐标。
+        您可以从 Google Maps 复制坐标。
+      `;
+      form.insertBefore(notice, form.firstChild);
+    }
   }
 
   /**
@@ -289,9 +332,20 @@ class ActivityEditorModal {
     const selectedPlaceDiv = document.getElementById('selected-place');
     if (selectedPlaceDiv) selectedPlaceDiv.style.display = 'none';
 
-    // Hide manual coords
+    // Hide manual coords (will be shown again if Maps unavailable)
     const manualCoordsSection = document.getElementById('manual-coords-section');
     if (manualCoordsSection) manualCoordsSection.style.display = 'none';
+
+    // Reset place search visibility (in case it was hidden in manual mode)
+    const placeSearchGroup = document.getElementById('place-search-input')?.closest('.form-group');
+    if (placeSearchGroup) placeSearchGroup.style.display = '';
+
+    const toggleDiv = document.getElementById('manual-coords-toggle');
+    if (toggleDiv) toggleDiv.style.display = '';
+
+    // Remove Maps unavailable notice
+    const notice = document.getElementById('maps-unavailable-notice');
+    if (notice) notice.remove();
 
     // Clear place search
     if (this.placeSearch) {

@@ -622,8 +622,7 @@ class RouteEditorUI {
     const firstDay = {
       day: 1,
       date: dateStr,
-      activities: [],
-      accommodation: null
+      activities: []
     };
 
     this.tripData.days.push(firstDay);

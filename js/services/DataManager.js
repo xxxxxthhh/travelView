@@ -446,8 +446,7 @@ class DataManager {
                             location: act.location,
                             icon: this.getActivityIcon(act.type),
                             ...act.metadata
-                        })),
-                    accommodation: day.accommodation || null
+                        }))
                 }))
             };
 
@@ -528,8 +527,7 @@ class DataManager {
                     .insert({
                         trip_id: tripId,
                         day_number: dayData.day,
-                        date: dayData.date,
-                        accommodation: dayData.accommodation || null
+                        date: dayData.date
                     })
                     .select()
                     .single();

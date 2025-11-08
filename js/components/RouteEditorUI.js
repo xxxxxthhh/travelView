@@ -15,6 +15,9 @@ class RouteEditorUI {
     this.tripData = null;
     this.routeData = null;
 
+    // Activity editor modal
+    this.activityEditorModal = null;
+
     this.logger.info('RouteEditorUI initialized');
   }
 
@@ -24,6 +27,13 @@ class RouteEditorUI {
   init() {
     this.createEditModeToggle();
     this.attachEventListeners();
+
+    // Initialize activity editor modal
+    if (window.ActivityEditorModal) {
+      this.activityEditorModal = new ActivityEditorModal(this);
+      this.activityEditorModal.init();
+    }
+
     this.logger.info('RouteEditorUI setup complete');
   }
 
@@ -127,7 +137,7 @@ class RouteEditorUI {
         break;
       case 'save-changes':
         e.preventDefault();
-        this.saveChanges();
+        this.saveChanges(true); // Exit edit mode after manual save
         break;
       case 'cancel-edit':
         e.preventDefault();
@@ -326,17 +336,93 @@ class RouteEditorUI {
   /**
    * Add an activity
    */
-  async addActivity(dayNumber) {
-    // TODO: Show modal to add activity
-    this.showMessage(`为第${dayNumber}天添加活动的功能即将推出`, 'info');
+  async addActivity(dayNumber, activity = null) {
+    if (!activity) {
+      // Show modal to add activity
+      if (this.activityEditorModal) {
+        this.activityEditorModal.showAdd(dayNumber);
+      }
+      return;
+    }
+
+    // Activity data provided, add to tripData
+    if (!this.tripData || !this.tripData.days) {
+      this.logger.error('No trip data available');
+      return;
+    }
+
+    const dayIndex = dayNumber - 1;
+    if (dayIndex < 0 || dayIndex >= this.tripData.days.length) {
+      this.logger.error('Invalid day number', { dayNumber });
+      return;
+    }
+
+    if (!this.tripData.days[dayIndex].activities) {
+      this.tripData.days[dayIndex].activities = [];
+    }
+
+    this.tripData.days[dayIndex].activities.push(activity);
+    this.logger.info('Activity added', { dayNumber, activity });
+
+    // Auto-save
+    await this.saveChanges();
   }
 
   /**
    * Edit an activity
    */
   async editActivity(dayNumber, activityIndex) {
-    // TODO: Show modal to edit activity
-    this.showMessage(`编辑活动的功能即将推出`, 'info');
+    if (!this.tripData || !this.tripData.days) {
+      this.logger.error('No trip data available');
+      return;
+    }
+
+    const dayIndex = dayNumber - 1;
+    if (dayIndex < 0 || dayIndex >= this.tripData.days.length) {
+      this.logger.error('Invalid day number', { dayNumber });
+      return;
+    }
+
+    const day = this.tripData.days[dayIndex];
+    if (!day.activities || activityIndex < 0 || activityIndex >= day.activities.length) {
+      this.logger.error('Invalid activity index', { dayNumber, activityIndex });
+      return;
+    }
+
+    const activity = day.activities[activityIndex];
+
+    // Show modal to edit activity
+    if (this.activityEditorModal) {
+      this.activityEditorModal.showEdit(dayNumber, activityIndex, activity);
+    }
+  }
+
+  /**
+   * Update an activity (called from ActivityEditorModal)
+   */
+  async updateActivity(dayNumber, activityIndex, activity) {
+    if (!this.tripData || !this.tripData.days) {
+      this.logger.error('No trip data available');
+      return;
+    }
+
+    const dayIndex = dayNumber - 1;
+    if (dayIndex < 0 || dayIndex >= this.tripData.days.length) {
+      this.logger.error('Invalid day number', { dayNumber });
+      return;
+    }
+
+    const day = this.tripData.days[dayIndex];
+    if (!day.activities || activityIndex < 0 || activityIndex >= day.activities.length) {
+      this.logger.error('Invalid activity index', { dayNumber, activityIndex });
+      return;
+    }
+
+    day.activities[activityIndex] = activity;
+    this.logger.info('Activity updated', { dayNumber, activityIndex, activity });
+
+    // Auto-save
+    await this.saveChanges();
   }
 
   /**
@@ -347,14 +433,34 @@ class RouteEditorUI {
       return;
     }
 
-    // TODO: Implement delete activity
-    this.showMessage('删除活动的功能即将推出', 'info');
+    if (!this.tripData || !this.tripData.days) {
+      this.logger.error('No trip data available');
+      return;
+    }
+
+    const dayIndex = dayNumber - 1;
+    if (dayIndex < 0 || dayIndex >= this.tripData.days.length) {
+      this.logger.error('Invalid day number', { dayNumber });
+      return;
+    }
+
+    const day = this.tripData.days[dayIndex];
+    if (!day.activities || activityIndex < 0 || activityIndex >= day.activities.length) {
+      this.logger.error('Invalid activity index', { dayNumber, activityIndex });
+      return;
+    }
+
+    day.activities.splice(activityIndex, 1);
+    this.logger.info('Activity deleted', { dayNumber, activityIndex });
+
+    // Auto-save
+    await this.saveChanges();
   }
 
   /**
    * Save changes to database
    */
-  async saveChanges() {
+  async saveChanges(exitEditMode = false) {
     if (!this.currentTripId) {
       this.showMessage('没有选中的行程', 'error');
       return;
@@ -370,12 +476,22 @@ class RouteEditorUI {
       await this.dataManager.saveRouteData(this.currentTripId, this.routeData);
 
       this.showMessage('更改已保存', 'success');
-      this.exitEditMode();
 
       // Reload trip to show changes
       if (window.travelApp && window.travelApp.onTripChanged) {
         const trip = this.tripManagerUI.trips.find(t => t.id === this.currentTripId);
         await window.travelApp.onTripChanged(trip);
+
+        // Re-enable edit mode controls after reload
+        if (this.isEditMode && !exitEditMode) {
+          setTimeout(() => {
+            this.addEditControls();
+          }, 500);
+        }
+      }
+
+      if (exitEditMode) {
+        this.exitEditMode();
       }
     } catch (error) {
       this.logger.error('Failed to save changes', error);

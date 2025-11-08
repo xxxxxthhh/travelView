@@ -1,0 +1,459 @@
+/**
+ * ActivityEditorModal Component
+ * Modal for adding/editing activities with place search
+ */
+
+class ActivityEditorModal {
+  constructor(routeEditorUI) {
+    this.routeEditorUI = routeEditorUI;
+    this.logger = new Logger({ prefix: '[ActivityEditorModal]', enabled: true });
+
+    // State
+    this.isOpen = false;
+    this.mode = 'add'; // 'add' or 'edit'
+    this.currentDay = null;
+    this.currentActivityIndex = null;
+    this.placeSearch = null;
+
+    this.logger.info('ActivityEditorModal initialized');
+  }
+
+  /**
+   * Initialize the modal
+   */
+  init() {
+    this.createModal();
+    this.attachEventListeners();
+    this.logger.info('ActivityEditorModal setup complete');
+  }
+
+  /**
+   * Create modal HTML
+   */
+  createModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.id = 'activity-editor-modal';
+    modal.innerHTML = `
+      <div class="modal-overlay" data-action="close-activity-editor"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="activity-editor-title">添加活动</h2>
+          <button class="modal-close" data-action="close-activity-editor">×</button>
+        </div>
+        <div class="modal-body">
+          <form id="activity-editor-form" class="auth-form">
+            <div class="form-group">
+              <label for="activity-time">时间 *</label>
+              <input type="time" id="activity-time" name="time" required>
+            </div>
+
+            <div class="form-group">
+              <label for="activity-type">类型 *</label>
+              <select id="activity-type" name="type" required>
+                <option value="">-- 请选择 --</option>
+                <option value="transport">🚗 交通</option>
+                <option value="sightseeing">⛩️ 景点游览</option>
+                <option value="food">🍽️ 美食</option>
+                <option value="accommodation">🏨 住宿</option>
+                <option value="entertainment">🎉 娱乐</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="activity-description">描述 *</label>
+              <input type="text" id="activity-description" name="description"
+                     placeholder="例如：东京塔观景" required>
+            </div>
+
+            <div class="form-group">
+              <label>📍 地点 *</label>
+              <div class="place-search-container">
+                <input type="text" id="place-search-input"
+                       placeholder="🔍 搜索地点..."
+                       autocomplete="off">
+                <div class="place-search-help">
+                  输入地点名称，选择建议项自动获取坐标
+                </div>
+              </div>
+            </div>
+
+            <div class="selected-place" id="selected-place" style="display: none;">
+              <div class="selected-place-header">
+                <span class="selected-place-icon">📍</span>
+                <span class="selected-place-name" id="selected-place-name"></span>
+              </div>
+              <div class="selected-place-coords">
+                <span id="selected-place-coords"></span>
+              </div>
+            </div>
+
+            <div class="form-group manual-coords" id="manual-coords-toggle">
+              <button type="button" class="btn-link" data-action="toggle-manual-coords">
+                ⚙️ 手动输入坐标
+              </button>
+            </div>
+
+            <div class="manual-coords-section" id="manual-coords-section" style="display: none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="activity-lat">纬度 (Latitude)</label>
+                  <input type="number" id="activity-lat" name="lat"
+                         step="0.000001" min="-90" max="90"
+                         placeholder="35.6586">
+                </div>
+                <div class="form-group">
+                  <label for="activity-lng">经度 (Longitude)</label>
+                  <input type="number" id="activity-lng" name="lng"
+                         step="0.000001" min="-180" max="180"
+                         placeholder="139.7454">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="activity-place-name">地点名称</label>
+                <input type="text" id="activity-place-name" name="placeName"
+                       placeholder="例如：东京塔">
+              </div>
+            </div>
+
+            <div class="form-error" id="activity-editor-error" style="display: none;"></div>
+
+            <div class="form-actions">
+              <button type="button" class="btn-secondary" data-action="close-activity-editor">取消</button>
+              <button type="submit" class="btn-primary">保存</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  /**
+   * Attach event listeners
+   */
+  attachEventListeners() {
+    document.body.addEventListener('click', (e) => {
+      const action = e.target.closest('[data-action]')?.dataset.action;
+      if (!action) return;
+
+      if (action === 'close-activity-editor') {
+        e.preventDefault();
+        this.close();
+      } else if (action === 'toggle-manual-coords') {
+        e.preventDefault();
+        this.toggleManualCoords();
+      }
+    });
+
+    document.body.addEventListener('submit', (e) => {
+      if (e.target.id === 'activity-editor-form') {
+        e.preventDefault();
+        this.handleSubmit();
+      }
+    });
+  }
+
+  /**
+   * Show modal to add activity
+   */
+  showAdd(dayNumber) {
+    this.mode = 'add';
+    this.currentDay = dayNumber;
+    this.currentActivityIndex = null;
+
+    const title = document.getElementById('activity-editor-title');
+    if (title) title.textContent = `添加活动 - 第${dayNumber}天`;
+
+    this.resetForm();
+    this.open();
+  }
+
+  /**
+   * Show modal to edit activity
+   */
+  showEdit(dayNumber, activityIndex, activity) {
+    this.mode = 'edit';
+    this.currentDay = dayNumber;
+    this.currentActivityIndex = activityIndex;
+
+    const title = document.getElementById('activity-editor-title');
+    if (title) title.textContent = `编辑活动 - 第${dayNumber}天`;
+
+    this.populateForm(activity);
+    this.open();
+  }
+
+  /**
+   * Open modal
+   */
+  open() {
+    this.isOpen = true;
+    const modal = document.getElementById('activity-editor-modal');
+    if (modal) {
+      modal.classList.add('active');
+    }
+
+    // Initialize place search after modal is visible
+    setTimeout(() => {
+      this.initPlaceSearch();
+    }, 100);
+
+    this.logger.info('Activity editor opened', { mode: this.mode, day: this.currentDay });
+  }
+
+  /**
+   * Close modal
+   */
+  close() {
+    this.isOpen = false;
+    const modal = document.getElementById('activity-editor-modal');
+    if (modal) {
+      modal.classList.remove('active');
+    }
+
+    this.resetForm();
+    this.logger.info('Activity editor closed');
+  }
+
+  /**
+   * Initialize place search
+   */
+  initPlaceSearch() {
+    const input = document.getElementById('place-search-input');
+    if (!input) return;
+
+    if (!this.placeSearch) {
+      this.placeSearch = new PlaceSearchInput({
+        inputId: 'place-search-input',
+        onPlaceSelected: (place) => {
+          this.handlePlaceSelected(place);
+        }
+      });
+    }
+
+    this.placeSearch.init(input);
+  }
+
+  /**
+   * Handle place selection from autocomplete
+   */
+  handlePlaceSelected(place) {
+    this.logger.info('Place selected', place);
+
+    // Show selected place
+    const selectedPlaceDiv = document.getElementById('selected-place');
+    const placeName = document.getElementById('selected-place-name');
+    const placeCoords = document.getElementById('selected-place-coords');
+
+    if (selectedPlaceDiv && placeName && placeCoords) {
+      placeName.textContent = place.name;
+      placeCoords.textContent = `${place.lat.toFixed(6)}, ${place.lng.toFixed(6)}`;
+      selectedPlaceDiv.style.display = 'block';
+    }
+
+    // Fill manual coords fields (hidden)
+    const latInput = document.getElementById('activity-lat');
+    const lngInput = document.getElementById('activity-lng');
+    const placeNameInput = document.getElementById('activity-place-name');
+
+    if (latInput) latInput.value = place.lat;
+    if (lngInput) lngInput.value = place.lng;
+    if (placeNameInput) placeNameInput.value = place.name;
+
+    this.clearError();
+  }
+
+  /**
+   * Toggle manual coords input
+   */
+  toggleManualCoords() {
+    const section = document.getElementById('manual-coords-section');
+    if (!section) return;
+
+    if (section.style.display === 'none') {
+      section.style.display = 'block';
+    } else {
+      section.style.display = 'none';
+    }
+  }
+
+  /**
+   * Reset form
+   */
+  resetForm() {
+    const form = document.getElementById('activity-editor-form');
+    if (form) form.reset();
+
+    // Hide selected place
+    const selectedPlaceDiv = document.getElementById('selected-place');
+    if (selectedPlaceDiv) selectedPlaceDiv.style.display = 'none';
+
+    // Hide manual coords
+    const manualCoordsSection = document.getElementById('manual-coords-section');
+    if (manualCoordsSection) manualCoordsSection.style.display = 'none';
+
+    // Clear place search
+    if (this.placeSearch) {
+      this.placeSearch.clear();
+    }
+
+    this.clearError();
+  }
+
+  /**
+   * Populate form with activity data
+   */
+  populateForm(activity) {
+    const timeInput = document.getElementById('activity-time');
+    const typeInput = document.getElementById('activity-type');
+    const descInput = document.getElementById('activity-description');
+    const latInput = document.getElementById('activity-lat');
+    const lngInput = document.getElementById('activity-lng');
+    const placeNameInput = document.getElementById('activity-place-name');
+
+    if (timeInput) timeInput.value = activity.time || '';
+    if (typeInput) typeInput.value = activity.type || '';
+    if (descInput) descInput.value = activity.description || '';
+
+    if (activity.location) {
+      if (latInput) latInput.value = activity.location.lat || '';
+      if (lngInput) lngInput.value = activity.location.lng || '';
+      if (placeNameInput) placeNameInput.value = activity.location.name || '';
+
+      // Show selected place
+      if (activity.location.lat && activity.location.lng) {
+        const selectedPlaceDiv = document.getElementById('selected-place');
+        const placeName = document.getElementById('selected-place-name');
+        const placeCoords = document.getElementById('selected-place-coords');
+
+        if (selectedPlaceDiv && placeName && placeCoords) {
+          placeName.textContent = activity.location.name || activity.description;
+          placeCoords.textContent = `${activity.location.lat}, ${activity.location.lng}`;
+          selectedPlaceDiv.style.display = 'block';
+        }
+      }
+    }
+  }
+
+  /**
+   * Handle form submission
+   */
+  async handleSubmit() {
+    const form = document.getElementById('activity-editor-form');
+    if (!form) return;
+
+    const formData = new FormData(form);
+    const time = formData.get('time');
+    const type = formData.get('type');
+    const description = formData.get('description');
+    let lat = formData.get('lat');
+    let lng = formData.get('lng');
+    let placeName = formData.get('placeName');
+
+    // Validate
+    if (!time || !type || !description) {
+      this.showError('请填写所有必填字段');
+      return;
+    }
+
+    if (!lat || !lng) {
+      this.showError('请选择地点或手动输入坐标');
+      return;
+    }
+
+    // Convert to numbers
+    lat = parseFloat(lat);
+    lng = parseFloat(lng);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      this.showError('坐标格式不正确');
+      return;
+    }
+
+    // Create activity object
+    const activity = {
+      time,
+      type,
+      description,
+      location: {
+        lat,
+        lng,
+        name: placeName || description
+      },
+      icon: this.getActivityIcon(type)
+    };
+
+    this.logger.info('Submitting activity', activity);
+
+    try {
+      this.showLoading(true);
+
+      if (this.mode === 'add') {
+        await this.routeEditorUI.addActivity(this.currentDay, activity);
+      } else if (this.mode === 'edit') {
+        await this.routeEditorUI.updateActivity(this.currentDay, this.currentActivityIndex, activity);
+      }
+
+      this.close();
+    } catch (error) {
+      this.logger.error('Failed to save activity', error);
+      this.showError('保存失败，请稍后再试');
+    } finally {
+      this.showLoading(false);
+    }
+  }
+
+  /**
+   * Get activity icon
+   */
+  getActivityIcon(type) {
+    const icons = {
+      transport: '🚗',
+      sightseeing: '⛩️',
+      food: '🍽️',
+      accommodation: '🏨',
+      entertainment: '🎉'
+    };
+    return icons[type] || '📍';
+  }
+
+  /**
+   * Show loading state
+   */
+  showLoading(isLoading) {
+    const form = document.getElementById('activity-editor-form');
+    if (!form) return;
+
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) {
+      submitBtn.disabled = isLoading;
+      submitBtn.textContent = isLoading ? '保存中...' : '保存';
+    }
+  }
+
+  /**
+   * Show error
+   */
+  showError(message) {
+    const errorEl = document.getElementById('activity-editor-error');
+    if (errorEl) {
+      errorEl.textContent = message;
+      errorEl.style.display = 'block';
+    }
+  }
+
+  /**
+   * Clear error
+   */
+  clearError() {
+    const errorEl = document.getElementById('activity-editor-error');
+    if (errorEl) {
+      errorEl.textContent = '';
+      errorEl.style.display = 'none';
+    }
+  }
+}
+
+// Make ActivityEditorModal available globally
+window.ActivityEditorModal = ActivityEditorModal;

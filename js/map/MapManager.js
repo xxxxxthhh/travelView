@@ -201,6 +201,13 @@ class MapManager {
         }
     }
 
+    // 清除所有标记
+    clearAllMarkers() {
+        if (this.markerManager) {
+            this.markerManager.clearMarkers();
+        }
+    }
+
     // 添加自定义路线
     async addCustomRoute(start, end, options = {}) {
         console.log(`🗺️ MapManager.addCustomRoute 被调用:`, {

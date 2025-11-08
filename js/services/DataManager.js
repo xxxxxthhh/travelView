@@ -262,6 +262,387 @@ class DataManager {
 
         return stats;
     }
+
+    /* ============================================
+       Supabase Integration Methods
+       ============================================ */
+
+    /**
+     * Get Supabase client
+     */
+    getSupabaseClient() {
+        return window.supabaseClient || null;
+    }
+
+    /**
+     * Load user's trips from Supabase
+     * @param {string} userId - User ID
+     * @returns {Promise<Array>}
+     */
+    async loadUserTrips(userId) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) {
+            this.logger.error('Supabase client not available');
+            return [];
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('trips')
+                .select('*')
+                .eq('user_id', userId)
+                .order('created_at', { ascending: false });
+
+            if (error) throw error;
+
+            this.logger.info('User trips loaded', { count: data.length });
+            return data || [];
+        } catch (error) {
+            this.logger.error('Failed to load user trips', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Create new trip
+     * @param {Object} tripData - Trip data
+     * @returns {Promise<Object>}
+     */
+    async createTrip(tripData) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) {
+            this.logger.error('Supabase client not available');
+            throw new Error('Supabase not available');
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('trips')
+                .insert([tripData])
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            this.logger.info('Trip created', { tripId: data.id });
+            return data;
+        } catch (error) {
+            this.logger.error('Failed to create trip', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update trip
+     * @param {string} tripId - Trip ID
+     * @param {Object} tripData - Updated trip data
+     * @returns {Promise<Object>}
+     */
+    async updateTrip(tripId, tripData) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) {
+            this.logger.error('Supabase client not available');
+            throw new Error('Supabase not available');
+        }
+
+        try {
+            const { data, error } = await supabase
+                .from('trips')
+                .update(tripData)
+                .eq('id', tripId)
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            this.logger.info('Trip updated', { tripId: data.id });
+            return data;
+        } catch (error) {
+            this.logger.error('Failed to update trip', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete trip
+     * @param {string} tripId - Trip ID
+     * @returns {Promise<void>}
+     */
+    async deleteTrip(tripId) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) {
+            this.logger.error('Supabase client not available');
+            throw new Error('Supabase not available');
+        }
+
+        try {
+            const { error } = await supabase
+                .from('trips')
+                .delete()
+                .eq('id', tripId);
+
+            if (error) throw error;
+
+            this.logger.info('Trip deleted', { tripId });
+        } catch (error) {
+            this.logger.error('Failed to delete trip', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Load trip data from Supabase (days and activities)
+     * @param {string} tripId - Trip ID
+     * @returns {Promise<Object|null>}
+     */
+    async loadTripDataFromDB(tripId) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) {
+            this.logger.error('Supabase client not available');
+            return null;
+        }
+
+        try {
+            // Load trip info
+            const { data: trip, error: tripError } = await supabase
+                .from('trips')
+                .select('*')
+                .eq('id', tripId)
+                .single();
+
+            if (tripError) throw tripError;
+
+            // Load days with activities
+            const { data: days, error: daysError } = await supabase
+                .from('days')
+                .select(`
+                    *,
+                    activities (
+                        *
+                    )
+                `)
+                .eq('trip_id', tripId)
+                .order('day_number', { ascending: true });
+
+            if (daysError) throw daysError;
+
+            // Format data to match kansai-trip.json structure
+            const tripData = {
+                tripInfo: {
+                    title: trip.title,
+                    destination: trip.destination || '',
+                    dates: this.formatDateRange(trip.start_date, trip.end_date),
+                    duration: this.calculateDuration(trip.start_date, trip.end_date)
+                },
+                days: (days || []).map(day => ({
+                    day: day.day_number,
+                    date: day.date,
+                    activities: (day.activities || [])
+                        .sort((a, b) => a.order_index - b.order_index)
+                        .map(act => ({
+                            time: act.time,
+                            type: act.type,
+                            description: act.description,
+                            location: act.location,
+                            icon: this.getActivityIcon(act.type),
+                            ...act.metadata
+                        }))
+                }))
+            };
+
+            this.logger.info('Trip data loaded from Supabase', { tripId, days: (days || []).length });
+            return tripData;
+        } catch (error) {
+            this.logger.error('Failed to load trip data from Supabase', error);
+            return null;
+        }
+    }
+
+    /**
+     * Load route data from Supabase
+     * @param {string} tripId - Trip ID
+     * @returns {Promise<Object|null>}
+     */
+    async loadRouteDataFromDB(tripId) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) {
+            this.logger.error('Supabase client not available');
+            return null;
+        }
+
+        try {
+            const { data: routes, error } = await supabase
+                .from('routes')
+                .select('*')
+                .eq('trip_id', tripId)
+                .order('day', { ascending: true });
+
+            if (error) throw error;
+
+            // Format data to match routes.json structure
+            const routeData = {
+                routes: (routes || []).map(route => ({
+                    day: route.day,
+                    start: route.start_location,
+                    end: route.end_location,
+                    color: route.color || '#667eea',
+                    label: route.label || ''
+                })),
+                returnRoute: null // Can be implemented later
+            };
+
+            this.logger.info('Route data loaded from Supabase', { tripId, routes: (routes || []).length });
+            return routeData;
+        } catch (error) {
+            this.logger.error('Failed to load route data from Supabase', error);
+            return null;
+        }
+    }
+
+    /**
+     * Save trip data to Supabase
+     * @param {string} tripId - Trip ID
+     * @param {Object} tripData - Trip data in kansai-trip.json format
+     * @returns {Promise<void>}
+     */
+    async saveTripData(tripId, tripData) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) {
+            this.logger.error('Supabase client not available');
+            throw new Error('Supabase not available');
+        }
+
+        try {
+            // Delete existing days and activities (cascade will handle activities)
+            await supabase
+                .from('days')
+                .delete()
+                .eq('trip_id', tripId);
+
+            // Insert days and activities
+            for (const dayData of tripData.days) {
+                // Insert day
+                const { data: day, error: dayError } = await supabase
+                    .from('days')
+                    .insert({
+                        trip_id: tripId,
+                        day_number: dayData.day,
+                        date: dayData.date
+                    })
+                    .select()
+                    .single();
+
+                if (dayError) throw dayError;
+
+                // Insert activities
+                if (dayData.activities && dayData.activities.length > 0) {
+                    const activities = dayData.activities.map((act, index) => ({
+                        day_id: day.id,
+                        time: act.time,
+                        type: act.type,
+                        description: act.description,
+                        location: act.location,
+                        order_index: index,
+                        metadata: {
+                            icon: act.icon,
+                            ...act
+                        }
+                    }));
+
+                    const { error: actError } = await supabase
+                        .from('activities')
+                        .insert(activities);
+
+                    if (actError) throw actError;
+                }
+            }
+
+            this.logger.info('Trip data saved to Supabase', { tripId });
+        } catch (error) {
+            this.logger.error('Failed to save trip data to Supabase', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Save route data to Supabase
+     * @param {string} tripId - Trip ID
+     * @param {Object} routeData - Route data in routes.json format
+     * @returns {Promise<void>}
+     */
+    async saveRouteData(tripId, routeData) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) {
+            this.logger.error('Supabase client not available');
+            throw new Error('Supabase not available');
+        }
+
+        try {
+            // Delete existing routes
+            await supabase
+                .from('routes')
+                .delete()
+                .eq('trip_id', tripId);
+
+            // Insert routes
+            if (routeData.routes && routeData.routes.length > 0) {
+                const routes = routeData.routes.map(route => ({
+                    trip_id: tripId,
+                    day: route.day,
+                    start_location: route.start,
+                    end_location: route.end,
+                    color: route.color || '#667eea',
+                    label: route.label || ''
+                }));
+
+                const { error } = await supabase
+                    .from('routes')
+                    .insert(routes);
+
+                if (error) throw error;
+            }
+
+            this.logger.info('Route data saved to Supabase', { tripId });
+        } catch (error) {
+            this.logger.error('Failed to save route data to Supabase', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Helper: Format date range
+     */
+    formatDateRange(startDate, endDate) {
+        if (!startDate && !endDate) return '';
+        const start = startDate ? new Date(startDate).toLocaleDateString('zh-CN') : '';
+        const end = endDate ? new Date(endDate).toLocaleDateString('zh-CN') : '';
+        return end ? `${start} - ${end}` : start;
+    }
+
+    /**
+     * Helper: Calculate duration
+     */
+    calculateDuration(startDate, endDate) {
+        if (!startDate || !endDate) return '';
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+        return `${days}天${days - 1}晚`;
+    }
+
+    /**
+     * Helper: Get activity icon
+     */
+    getActivityIcon(type) {
+        const icons = {
+            transport: '🚗',
+            sightseeing: '⛩️',
+            food: '🍽️',
+            accommodation: '🏨',
+            entertainment: '🎉'
+        };
+        return icons[type] || '📍';
+    }
 }
 
 // 导出

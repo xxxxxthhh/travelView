@@ -47,10 +47,14 @@ class GoogleMapsLoader {
                 script.async = true;
                 script.defer = true;
 
-                // 构建API URL - 添加geometry库支持
+                // 构建API URL - 从配置读取libraries
+                const libraries = config.LIBRARIES && config.LIBRARIES.length > 0
+                    ? config.LIBRARIES.join(',')
+                    : 'geometry,places'; // 默认包含geometry和places
+
                 const params = new URLSearchParams({
                     key: config.API_KEY,
-                    libraries: 'geometry', // 添加geometry库用于路线解码
+                    libraries: libraries,
                     callback: 'initGoogleMaps',
                     loading: 'async'
                 });
@@ -61,9 +65,9 @@ class GoogleMapsLoader {
                 window.initGoogleMaps = () => {
                     this.isLoaded = true;
                     this.isLoading = false;
-                    console.log('✅ Google Maps API 加载成功 (含geometry库)');
+                    console.log(`✅ Google Maps API 加载成功 (libraries: ${libraries})`);
                     this.resolveAll(google.maps);
-                    
+
                     // 清理全局回调
                     delete window.initGoogleMaps;
                 };

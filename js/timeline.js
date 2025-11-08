@@ -38,9 +38,36 @@ class Timeline {
     }
 
     renderHeader() {
+        // Get trip info from data
+        const tripInfo = this.data.tripInfo || {};
+        const title = tripInfo.title || '行程安排';
+        const destination = tripInfo.destination || '';
+        const dates = tripInfo.dates || '';
+        const daysCount = this.data.days ? this.data.days.length : 0;
+
+        // Debug logging
+        console.log('📋 Timeline rendering header:', {
+            title,
+            destination,
+            dates,
+            daysCount,
+            tripInfo
+        });
+
+        // Build subtitle with trip info
+        let subtitle = '';
+        if (destination || dates || daysCount > 0) {
+            const parts = [];
+            if (destination) parts.push(`📍 ${destination}`);
+            if (dates) parts.push(`📅 ${dates}`);
+            if (daysCount > 0) parts.push(`⏱️ ${daysCount}天`);
+            subtitle = `<div class="timeline-subtitle">${parts.join(' | ')}</div>`;
+        }
+
         return `
             <div class="timeline-header">
-                <h3 class="timeline-title">行程安排</h3>
+                <h3 class="timeline-title">${title}</h3>
+                ${subtitle}
                 <div class="filter-buttons">
                     <button class="filter-btn ${this.filterType === 'all' ? 'active' : ''}" data-filter="all">全部</button>
                     <button class="filter-btn ${this.filterType === 'sightseeing' ? 'active' : ''}" data-filter="sightseeing">景点</button>

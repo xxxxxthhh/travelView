@@ -19,12 +19,21 @@ class TravelApp {
     this.renderedRoutes = new Set(); // 跟踪已渲染的路线
     this.lastRenderedDay = 0; // 记录上次渲染到的天数
 
+    // Initialize Auth components
+    this.authManager = null;
+    this.authUI = null;
+    this.tripManagerUI = null;
+    this.routeEditorUI = null;
+
     this.init();
   }
 
   async init() {
     try {
       this.logger.info("Initializing Travel App...");
+
+      // Initialize authentication
+      this.initAuth();
 
       // 显示API密钥状态
       this.checkApiKeyStatus();
@@ -43,11 +52,338 @@ class TravelApp {
       // 设置初始状态
       this.showDay(1);
 
+      // Update page header with demo trip data
+      this.updatePageHeader(this.tripData);
+
       this.logger.info("Travel App initialized successfully");
     } catch (error) {
       this.logger.error("Failed to initialize app", error);
       this.showError("应用初始化失败，请刷新页面重试");
     }
+  }
+
+  /**
+   * Initialize authentication components
+   */
+  initAuth() {
+    try {
+      // Check if Supabase client is available
+      if (window.supabaseClient && window.AuthManager && window.AuthUI) {
+        this.authManager = new AuthManager(window.supabaseClient);
+        this.authUI = new AuthUI(this.authManager);
+        this.authUI.init();
+
+        // Initialize trip manager UI
+        if (window.TripManagerUI) {
+          this.tripManagerUI = new TripManagerUI(this.authManager, this.dataManager);
+          this.tripManagerUI.init();
+        }
+
+        // Initialize route editor UI
+        if (window.RouteEditorUI) {
+          this.routeEditorUI = new RouteEditorUI(this.dataManager, this.tripManagerUI);
+          this.routeEditorUI.init();
+        }
+
+        this.logger.info("Authentication components initialized");
+      } else {
+        this.logger.warn("Supabase client not available, auth disabled");
+      }
+    } catch (error) {
+      this.logger.error("Failed to initialize auth", error);
+    }
+  }
+
+  /**
+   * Handle authentication state changes
+   */
+  onAuthStateChanged(user) {
+    this.logger.info("Auth state changed", { user: user ? user.email : null });
+
+    if (user) {
+      // User logged in - load user's trips
+      this.loadUserTrips();
+    } else {
+      // User logged out - clear user's trips
+      this.clearUserTrips();
+    }
+  }
+
+  /**
+   * Load user's trips from Supabase
+   */
+  async loadUserTrips() {
+    this.logger.info("Loading user trips...");
+    // Trigger trip manager to load trips
+    if (this.tripManagerUI) {
+      await this.tripManagerUI.loadTrips();
+    }
+  }
+
+  /**
+   * Clear user's trips
+   */
+  clearUserTrips() {
+    this.logger.info("Clearing user trips...");
+    // Reset to demo data
+    if (this.tripManagerUI) {
+      this.tripManagerUI.currentTrip = null;
+      this.tripManagerUI.trips = [];
+    }
+    // Hide route editor
+    if (this.routeEditorUI) {
+      this.routeEditorUI.hideEditToggle();
+    }
+    // TODO: Reset app to show default demo trip
+  }
+
+  /**
+   * Handle trip changes (when user selects a different trip)
+   */
+  async onTripChanged(trip) {
+    this.logger.info("Trip changed", { trip: trip ? trip.title : null });
+
+    if (!trip) {
+      // No trip selected, show demo data
+      this.logger.info("No trip selected, loading demo data");
+      // TODO: Load demo data
+      return;
+    }
+
+    try {
+      // Load trip data from database
+      this.logger.info("Step 1: Loading trip data from database...", { tripId: trip.id });
+      const tripData = await this.dataManager.loadTripDataFromDB(trip.id);
+      this.logger.info("Step 1 complete: Trip data loaded", { hasData: !!tripData, daysCount: tripData?.days?.length });
+
+      this.logger.info("Step 2: Loading route data from database...");
+      const routeData = await this.dataManager.loadRouteDataFromDB(trip.id);
+      this.logger.info("Step 2 complete: Route data loaded", { hasData: !!routeData, routesCount: routeData?.routes?.length });
+
+      if (!tripData || !routeData) {
+        this.logger.warn("No data found for trip, using default structure");
+        // Initialize empty trip structure
+        this.tripData = {
+          tripInfo: {
+            title: trip.title,
+            destination: trip.destination || '',
+            dates: this.formatDateRange(trip.start_date, trip.end_date)
+          },
+          days: []
+        };
+        this.routeData = { routes: [], returnRoute: null };
+      } else {
+        this.tripData = tripData;
+        this.routeData = routeData;
+      }
+
+      this.logger.info("Step 3: Trip data prepared", {
+        daysCount: this.tripData.days.length,
+        routesCount: this.routeData.routes.length
+      });
+
+      // Re-initialize components with new data
+      this.currentDay = 1;
+      this.renderedRoutes.clear();
+      this.lastRenderedDay = 0;
+
+      // Update timeline
+      this.logger.info("Step 4: Updating timeline...");
+      if (this.timeline) {
+        this.timeline.updateData(this.tripData);
+      }
+      this.logger.info("Step 4 complete: Timeline updated");
+
+      // Update map
+      this.logger.info("Step 5: Updating map...");
+      if (this.mapManager) {
+        this.mapManager.clearAllRoutes();
+        this.mapManager.clearAllMarkers();
+
+        // Center map based on trip activities
+        this.centerMapOnTrip(this.tripData);
+
+        // Re-render all markers for the trip
+        this.renderAllMarkers(this.tripData);
+      }
+      this.logger.info("Step 5 complete: Map updated");
+
+      // Show first day (skip if no days yet)
+      if (this.tripData.days && this.tripData.days.length > 0) {
+        this.logger.info("Step 6: Showing day 1...");
+        this.showDay(1);
+        this.logger.info("Step 6 complete: Day 1 shown");
+      } else {
+        this.logger.warn("No days in trip data, skipping showDay");
+        // Clear map and timeline to show empty state
+        this.currentDay = 0;
+      }
+
+      // Notify route editor
+      this.logger.info("Step 7: Notifying route editor...");
+      if (this.routeEditorUI) {
+        this.routeEditorUI.showEditToggle(trip.id, this.tripData, this.routeData);
+      }
+      this.logger.info("Step 7 complete: Route editor notified");
+
+      // Update page header
+      this.logger.info("Step 8: Updating page header...");
+      this.updatePageHeader(this.tripData);
+      this.logger.info("Step 8 complete: Page header updated");
+
+      this.logger.info("✅ Trip data loaded and displayed successfully");
+    } catch (error) {
+      this.logger.error("❌ Failed to load trip data", error);
+      this.logger.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      this.showError(`加载行程数据失败: ${error.message || "未知错误"}`);
+    }
+  }
+
+  /**
+   * Format date range for display
+   */
+  formatDateRange(startDate, endDate) {
+    if (!startDate && !endDate) return '';
+    const start = startDate ? new Date(startDate).toLocaleDateString('zh-CN') : '';
+    const end = endDate ? new Date(endDate).toLocaleDateString('zh-CN') : '';
+    return end ? `${start} - ${end}` : start;
+  }
+
+  /**
+   * Update page header with trip information
+   */
+  updatePageHeader(tripData) {
+    const tripInfo = tripData?.tripInfo || {};
+    const days = tripData?.days || [];
+
+    // Get elements
+    const titleEl = document.getElementById('trip-header-title');
+    const subtitleEl = document.getElementById('trip-header-subtitle');
+    const statsEl = document.getElementById('trip-header-stats');
+    const statDaysEl = document.getElementById('stat-days');
+    const statDestEl = document.getElementById('stat-destination');
+    const statActivitiesEl = document.getElementById('stat-activities');
+
+    if (!titleEl || !subtitleEl || !statsEl) {
+      this.logger.warn('Header elements not found');
+      return;
+    }
+
+    // Update title
+    const icon = this.getDestinationIcon(tripInfo.destination);
+    titleEl.textContent = `${icon} ${tripInfo.title || '我的行程'}`;
+
+    // Update subtitle
+    if (tripInfo.dates) {
+      subtitleEl.textContent = tripInfo.dates;
+    } else {
+      subtitleEl.textContent = '尚未设置日期';
+    }
+
+    // Calculate statistics
+    const daysCount = days.length;
+    let activitiesCount = 0;
+    days.forEach(day => {
+      if (day.activities) {
+        activitiesCount += day.activities.length;
+      }
+    });
+
+    // Update stats
+    if (daysCount > 0) {
+      statDaysEl.textContent = `${daysCount}天行程`;
+      statDestEl.textContent = tripInfo.destination ? `📍 ${tripInfo.destination}` : '未设置目的地';
+      statActivitiesEl.textContent = `${activitiesCount}个活动`;
+      statsEl.style.display = 'flex';
+    } else {
+      statsEl.style.display = 'none';
+    }
+
+    this.logger.info('Page header updated', { title: tripInfo.title, days: daysCount, activities: activitiesCount });
+  }
+
+  /**
+   * Get icon for destination
+   */
+  getDestinationIcon(destination) {
+    if (!destination) return '🗺️';
+
+    const dest = destination.toLowerCase();
+    if (dest.includes('日本') || dest.includes('东京') || dest.includes('京都') || dest.includes('大阪') || dest.includes('关西')) return '🇯🇵';
+    if (dest.includes('中国') || dest.includes('北京') || dest.includes('上海')) return '🇨🇳';
+    if (dest.includes('法国') || dest.includes('巴黎')) return '🇫🇷';
+    if (dest.includes('英国') || dest.includes('伦敦')) return '🇬🇧';
+    if (dest.includes('美国') || dest.includes('纽约')) return '🇺🇸';
+    if (dest.includes('泰国') || dest.includes('曼谷')) return '🇹🇭';
+    if (dest.includes('韩国') || dest.includes('首尔')) return '🇰🇷';
+
+    return '🗺️';
+  }
+
+  /**
+   * Center map on trip activities
+   */
+  centerMapOnTrip(tripData) {
+    if (!this.mapManager || !this.mapManager.map) return;
+
+    // Collect all activity coordinates
+    const coordinates = [];
+    if (tripData.days) {
+      tripData.days.forEach(day => {
+        if (day.activities) {
+          day.activities.forEach(activity => {
+            if (activity.location && activity.location.lat && activity.location.lng) {
+              coordinates.push(activity.location);
+            }
+          });
+        }
+      });
+    }
+
+    if (coordinates.length === 0) {
+      this.logger.warn('No coordinates found in trip data, keeping default map center');
+      return;
+    }
+
+    // Create bounds from coordinates
+    const bounds = new google.maps.LatLngBounds();
+    coordinates.forEach(coord => {
+      bounds.extend(new google.maps.LatLng(coord.lat, coord.lng));
+    });
+
+    // Fit map to bounds
+    this.mapManager.map.fitBounds(bounds);
+
+    // Add padding for better visualization
+    const padding = { top: 50, right: 50, bottom: 50, left: 50 };
+    this.mapManager.map.fitBounds(bounds, padding);
+
+    this.logger.info(`Map centered on ${coordinates.length} activity locations`);
+  }
+
+  /**
+   * Render all markers for trip activities
+   */
+  renderAllMarkers(tripData) {
+    if (!this.mapManager || !tripData.days) return;
+
+    let totalMarkers = 0;
+    tripData.days.forEach((day, index) => {
+      if (day.activities && day.activities.length > 0) {
+        // Render markers for this day
+        if (this.mapManager.markerManager) {
+          // Show all days' markers
+          this.mapManager.markerManager.showDay(day.day);
+          totalMarkers += day.activities.length;
+        }
+      }
+    });
+
+    this.logger.info(`Rendered ${totalMarkers} markers for trip`);
   }
 
   checkApiKeyStatus() {

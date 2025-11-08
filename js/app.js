@@ -52,6 +52,9 @@ class TravelApp {
       // 设置初始状态
       this.showDay(1);
 
+      // Update page header with demo trip data
+      this.updatePageHeader(this.tripData);
+
       this.logger.info("Travel App initialized successfully");
     } catch (error) {
       this.logger.error("Failed to initialize app", error);

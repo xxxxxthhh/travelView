@@ -149,8 +149,13 @@ class TravelApp {
 
     try {
       // Load trip data from database
+      this.logger.info("Step 1: Loading trip data from database...", { tripId: trip.id });
       const tripData = await this.dataManager.loadTripDataFromDB(trip.id);
+      this.logger.info("Step 1 complete: Trip data loaded", { hasData: !!tripData, daysCount: tripData?.days?.length });
+
+      this.logger.info("Step 2: Loading route data from database...");
       const routeData = await this.dataManager.loadRouteDataFromDB(trip.id);
+      this.logger.info("Step 2 complete: Route data loaded", { hasData: !!routeData, routesCount: routeData?.routes?.length });
 
       if (!tripData || !routeData) {
         this.logger.warn("No data found for trip, using default structure");
@@ -169,26 +174,37 @@ class TravelApp {
         this.routeData = routeData;
       }
 
+      this.logger.info("Step 3: Trip data prepared", {
+        daysCount: this.tripData.days.length,
+        routesCount: this.routeData.routes.length
+      });
+
       // Re-initialize components with new data
       this.currentDay = 1;
       this.renderedRoutes.clear();
       this.lastRenderedDay = 0;
 
       // Update timeline
+      this.logger.info("Step 4: Updating timeline...");
       if (this.timeline) {
         this.timeline.updateData(this.tripData);
       }
+      this.logger.info("Step 4 complete: Timeline updated");
 
       // Update map
+      this.logger.info("Step 5: Updating map...");
       if (this.mapManager) {
         this.mapManager.clearAllRoutes();
         this.mapManager.clearAllMarkers();
         // TODO: Re-render markers and routes for new trip
       }
+      this.logger.info("Step 5 complete: Map updated");
 
       // Show first day (skip if no days yet)
       if (this.tripData.days && this.tripData.days.length > 0) {
+        this.logger.info("Step 6: Showing day 1...");
         this.showDay(1);
+        this.logger.info("Step 6 complete: Day 1 shown");
       } else {
         this.logger.warn("No days in trip data, skipping showDay");
         // Clear map and timeline to show empty state
@@ -196,14 +212,21 @@ class TravelApp {
       }
 
       // Notify route editor
+      this.logger.info("Step 7: Notifying route editor...");
       if (this.routeEditorUI) {
         this.routeEditorUI.showEditToggle(trip.id, this.tripData, this.routeData);
       }
+      this.logger.info("Step 7 complete: Route editor notified");
 
-      this.logger.info("Trip data loaded and displayed");
+      this.logger.info("✅ Trip data loaded and displayed successfully");
     } catch (error) {
-      this.logger.error("Failed to load trip data", error);
-      this.showError("加载行程数据失败");
+      this.logger.error("❌ Failed to load trip data", error);
+      this.logger.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      this.showError(`加载行程数据失败: ${error.message || "未知错误"}`);
     }
   }
 

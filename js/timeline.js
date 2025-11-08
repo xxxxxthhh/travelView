@@ -45,6 +45,15 @@ class Timeline {
         const dates = tripInfo.dates || '';
         const daysCount = this.data.days ? this.data.days.length : 0;
 
+        // Debug logging
+        console.log('📋 Timeline rendering header:', {
+            title,
+            destination,
+            dates,
+            daysCount,
+            tripInfo
+        });
+
         // Build subtitle with trip info
         let subtitle = '';
         if (destination || dates || daysCount > 0) {

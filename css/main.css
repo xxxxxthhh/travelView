@@ -321,6 +321,14 @@ body {
     font-size: 1.3em;
     font-weight: 600;
     color: var(--gray-800);
+    margin-bottom: 4px;
+}
+
+.timeline-subtitle {
+    font-size: 0.85em;
+    color: var(--gray-600);
+    margin-bottom: 12px;
+    line-height: 1.5;
 }
 
 .filter-buttons {

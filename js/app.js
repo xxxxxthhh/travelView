@@ -196,7 +196,12 @@ class TravelApp {
       if (this.mapManager) {
         this.mapManager.clearAllRoutes();
         this.mapManager.clearAllMarkers();
-        // TODO: Re-render markers and routes for new trip
+
+        // Center map based on trip activities
+        this.centerMapOnTrip(this.tripData);
+
+        // Re-render all markers for the trip
+        this.renderAllMarkers(this.tripData);
       }
       this.logger.info("Step 5 complete: Map updated");
 
@@ -238,6 +243,68 @@ class TravelApp {
     const start = startDate ? new Date(startDate).toLocaleDateString('zh-CN') : '';
     const end = endDate ? new Date(endDate).toLocaleDateString('zh-CN') : '';
     return end ? `${start} - ${end}` : start;
+  }
+
+  /**
+   * Center map on trip activities
+   */
+  centerMapOnTrip(tripData) {
+    if (!this.mapManager || !this.mapManager.map) return;
+
+    // Collect all activity coordinates
+    const coordinates = [];
+    if (tripData.days) {
+      tripData.days.forEach(day => {
+        if (day.activities) {
+          day.activities.forEach(activity => {
+            if (activity.location && activity.location.lat && activity.location.lng) {
+              coordinates.push(activity.location);
+            }
+          });
+        }
+      });
+    }
+
+    if (coordinates.length === 0) {
+      this.logger.warn('No coordinates found in trip data, keeping default map center');
+      return;
+    }
+
+    // Create bounds from coordinates
+    const bounds = new google.maps.LatLngBounds();
+    coordinates.forEach(coord => {
+      bounds.extend(new google.maps.LatLng(coord.lat, coord.lng));
+    });
+
+    // Fit map to bounds
+    this.mapManager.map.fitBounds(bounds);
+
+    // Add padding for better visualization
+    const padding = { top: 50, right: 50, bottom: 50, left: 50 };
+    this.mapManager.map.fitBounds(bounds, padding);
+
+    this.logger.info(`Map centered on ${coordinates.length} activity locations`);
+  }
+
+  /**
+   * Render all markers for trip activities
+   */
+  renderAllMarkers(tripData) {
+    if (!this.mapManager || !tripData.days) return;
+
+    let totalMarkers = 0;
+    tripData.days.forEach((day, index) => {
+      if (day.activities && day.activities.length > 0) {
+        // Render markers for this day
+        if (this.mapManager.markerManager) {
+          // Show all days' markers
+          this.mapManager.markerManager.showDay(day.day);
+          totalMarkers += day.activities.length;
+        }
+      }
+    });
+
+    this.logger.info(`Rendered ${totalMarkers} markers for trip`);
   }
 
   checkApiKeyStatus() {

@@ -434,7 +434,7 @@ class DataManager {
                     dates: this.formatDateRange(trip.start_date, trip.end_date),
                     duration: this.calculateDuration(trip.start_date, trip.end_date)
                 },
-                days: days.map(day => ({
+                days: (days || []).map(day => ({
                     day: day.day_number,
                     date: day.date,
                     activities: (day.activities || [])
@@ -451,7 +451,7 @@ class DataManager {
                 }))
             };
 
-            this.logger.info('Trip data loaded from Supabase', { tripId, days: days.length });
+            this.logger.info('Trip data loaded from Supabase', { tripId, days: (days || []).length });
             return tripData;
         } catch (error) {
             this.logger.error('Failed to load trip data from Supabase', error);
@@ -482,7 +482,7 @@ class DataManager {
 
             // Format data to match routes.json structure
             const routeData = {
-                routes: routes.map(route => ({
+                routes: (routes || []).map(route => ({
                     day: route.day,
                     start: route.start_location,
                     end: route.end_location,
@@ -492,7 +492,7 @@ class DataManager {
                 returnRoute: null // Can be implemented later
             };
 
-            this.logger.info('Route data loaded from Supabase', { tripId, routes: routes.length });
+            this.logger.info('Route data loaded from Supabase', { tripId, routes: (routes || []).length });
             return routeData;
         } catch (error) {
             this.logger.error('Failed to load route data from Supabase', error);

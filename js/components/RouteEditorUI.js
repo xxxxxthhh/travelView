@@ -68,6 +68,13 @@ class RouteEditorUI {
     if (toggle) {
       toggle.style.display = 'block';
     }
+
+    // Check if trip has no days, show empty state
+    if (!tripData.days || tripData.days.length === 0) {
+      this.showEmptyState();
+    } else {
+      this.hideEmptyState();
+    }
   }
 
   /**
@@ -103,6 +110,10 @@ class RouteEditorUI {
       case 'toggle-edit-mode':
         e.preventDefault();
         this.toggleEditMode();
+        break;
+      case 'add-first-day':
+        e.preventDefault();
+        this.addFirstDay();
         break;
       case 'add-day':
         e.preventDefault();
@@ -177,8 +188,13 @@ class RouteEditorUI {
       toggle.innerHTML = '✓ 编辑中';
     }
 
-    // Add edit controls to timeline
-    this.addEditControls();
+    // Check if trip has no days
+    if (!this.tripData.days || this.tripData.days.length === 0) {
+      this.showAddFirstDayButton();
+    } else {
+      // Add edit controls to timeline
+      this.addEditControls();
+    }
 
     // Show save/cancel buttons
     this.showEditActions();
@@ -521,6 +537,119 @@ class RouteEditorUI {
       messageEl.classList.add('fade-out');
       setTimeout(() => messageEl.remove(), 300);
     }, 3000);
+  }
+
+  /**
+   * Show empty state when trip has no days
+   */
+  showEmptyState() {
+    const timeline = document.querySelector('.timeline-content');
+    if (!timeline) return;
+
+    // Check if empty state already exists
+    if (document.getElementById('trip-empty-state')) return;
+
+    const emptyState = document.createElement('div');
+    emptyState.id = 'trip-empty-state';
+    emptyState.style.cssText = `
+      padding: 60px 20px;
+      text-align: center;
+      color: #666;
+    `;
+    emptyState.innerHTML = `
+      <div style="font-size: 48px; margin-bottom: 20px;">📅</div>
+      <h3 style="margin: 0 0 12px 0; color: #333;">行程还没有任何天数</h3>
+      <p style="margin: 0 0 24px 0; color: #999;">点击"编辑模式"按钮开始编辑行程</p>
+      <p style="margin: 0; font-size: 14px; color: #999;">
+        在编辑模式下，您可以添加天数、活动和路线
+      </p>
+    `;
+
+    timeline.appendChild(emptyState);
+    this.logger.info('Empty state shown');
+  }
+
+  /**
+   * Show add first day button in edit mode
+   */
+  showAddFirstDayButton() {
+    const emptyState = document.getElementById('trip-empty-state');
+    if (!emptyState) return;
+
+    // Check if button already exists
+    if (emptyState.querySelector('[data-action="add-first-day"]')) return;
+
+    const button = document.createElement('button');
+    button.className = 'btn-primary';
+    button.dataset.action = 'add-first-day';
+    button.style.cssText = `
+      margin-top: 20px;
+      padding: 12px 24px;
+      font-size: 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    `;
+    button.textContent = '+ 添加第一天';
+
+    emptyState.appendChild(button);
+    this.logger.info('Add first day button shown');
+  }
+
+  /**
+   * Add first day to trip
+   */
+  async addFirstDay() {
+    if (!this.tripData) {
+      this.logger.error('No trip data available');
+      return;
+    }
+
+    // Initialize days array if needed
+    if (!this.tripData.days) {
+      this.tripData.days = [];
+    }
+
+    // Get trip start date or use today
+    const trip = this.tripManagerUI.trips.find(t => t.id === this.currentTripId);
+    const startDate = trip && trip.start_date ? new Date(trip.start_date) : new Date();
+    const dateStr = startDate.toISOString().split('T')[0];
+
+    // Create first day
+    const firstDay = {
+      day: 1,
+      date: dateStr,
+      activities: [],
+      accommodation: null
+    };
+
+    this.tripData.days.push(firstDay);
+    this.logger.info('First day added', firstDay);
+
+    // Save to database
+    try {
+      await this.saveChanges();
+      this.showMessage('第一天已添加', 'success');
+    } catch (error) {
+      this.logger.error('Failed to add first day', error);
+      // Rollback
+      this.tripData.days.pop();
+      this.showMessage('添加失败，请稍后再试', 'error');
+    }
+  }
+
+  /**
+   * Hide empty state
+   */
+  hideEmptyState() {
+    const emptyState = document.getElementById('trip-empty-state');
+    if (emptyState) {
+      emptyState.remove();
+      this.logger.info('Empty state hidden');
+    }
   }
 }
 

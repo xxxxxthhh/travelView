@@ -181,12 +181,19 @@ class TravelApp {
 
       // Update map
       if (this.mapManager) {
-        this.mapManager.clearAll();
+        this.mapManager.clearAllRoutes();
+        this.mapManager.clearAllMarkers();
         // TODO: Re-render markers and routes for new trip
       }
 
-      // Show first day
-      this.showDay(1);
+      // Show first day (skip if no days yet)
+      if (this.tripData.days && this.tripData.days.length > 0) {
+        this.showDay(1);
+      } else {
+        this.logger.warn("No days in trip data, skipping showDay");
+        // Clear map and timeline to show empty state
+        this.currentDay = 0;
+      }
 
       // Notify route editor
       if (this.routeEditorUI) {

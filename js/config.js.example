@@ -12,8 +12,8 @@ const MAPS_CONFIG = {
     // 获取方式: https://console.cloud.google.com/
     API_KEY: 'YOUR_GOOGLE_MAPS_API_KEY_HERE',  // 👈 替换这里
 
-    // API库
-    LIBRARIES: ['geometry'],
+    // API库（geometry用于路线，places用于地点搜索）
+    LIBRARIES: ['geometry', 'places'],
 
     // 地图默认配置
     DEFAULT_CENTER: { lat: 34.6560, lng: 135.5060 }, // 关西地区

@@ -223,6 +223,11 @@ class TravelApp {
       }
       this.logger.info("Step 7 complete: Route editor notified");
 
+      // Update page header
+      this.logger.info("Step 8: Updating page header...");
+      this.updatePageHeader(this.tripData);
+      this.logger.info("Step 8 complete: Page header updated");
+
       this.logger.info("✅ Trip data loaded and displayed successfully");
     } catch (error) {
       this.logger.error("❌ Failed to load trip data", error);
@@ -243,6 +248,77 @@ class TravelApp {
     const start = startDate ? new Date(startDate).toLocaleDateString('zh-CN') : '';
     const end = endDate ? new Date(endDate).toLocaleDateString('zh-CN') : '';
     return end ? `${start} - ${end}` : start;
+  }
+
+  /**
+   * Update page header with trip information
+   */
+  updatePageHeader(tripData) {
+    const tripInfo = tripData?.tripInfo || {};
+    const days = tripData?.days || [];
+
+    // Get elements
+    const titleEl = document.getElementById('trip-header-title');
+    const subtitleEl = document.getElementById('trip-header-subtitle');
+    const statsEl = document.getElementById('trip-header-stats');
+    const statDaysEl = document.getElementById('stat-days');
+    const statDestEl = document.getElementById('stat-destination');
+    const statActivitiesEl = document.getElementById('stat-activities');
+
+    if (!titleEl || !subtitleEl || !statsEl) {
+      this.logger.warn('Header elements not found');
+      return;
+    }
+
+    // Update title
+    const icon = this.getDestinationIcon(tripInfo.destination);
+    titleEl.textContent = `${icon} ${tripInfo.title || '我的行程'}`;
+
+    // Update subtitle
+    if (tripInfo.dates) {
+      subtitleEl.textContent = tripInfo.dates;
+    } else {
+      subtitleEl.textContent = '尚未设置日期';
+    }
+
+    // Calculate statistics
+    const daysCount = days.length;
+    let activitiesCount = 0;
+    days.forEach(day => {
+      if (day.activities) {
+        activitiesCount += day.activities.length;
+      }
+    });
+
+    // Update stats
+    if (daysCount > 0) {
+      statDaysEl.textContent = `${daysCount}天行程`;
+      statDestEl.textContent = tripInfo.destination ? `📍 ${tripInfo.destination}` : '未设置目的地';
+      statActivitiesEl.textContent = `${activitiesCount}个活动`;
+      statsEl.style.display = 'flex';
+    } else {
+      statsEl.style.display = 'none';
+    }
+
+    this.logger.info('Page header updated', { title: tripInfo.title, days: daysCount, activities: activitiesCount });
+  }
+
+  /**
+   * Get icon for destination
+   */
+  getDestinationIcon(destination) {
+    if (!destination) return '🗺️';
+
+    const dest = destination.toLowerCase();
+    if (dest.includes('日本') || dest.includes('东京') || dest.includes('京都') || dest.includes('大阪') || dest.includes('关西')) return '🇯🇵';
+    if (dest.includes('中国') || dest.includes('北京') || dest.includes('上海')) return '🇨🇳';
+    if (dest.includes('法国') || dest.includes('巴黎')) return '🇫🇷';
+    if (dest.includes('英国') || dest.includes('伦敦')) return '🇬🇧';
+    if (dest.includes('美国') || dest.includes('纽约')) return '🇺🇸';
+    if (dest.includes('泰国') || dest.includes('曼谷')) return '🇹🇭';
+    if (dest.includes('韩国') || dest.includes('首尔')) return '🇰🇷';
+
+    return '🗺️';
   }
 
   /**

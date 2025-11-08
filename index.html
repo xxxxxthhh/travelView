@@ -15,12 +15,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>🇯🇵 关西之旅</h1>
-            <p>2025年8月22日 - 8月31日 | 10天9晚深度游</p>
-            <div class="header-stats">
-                <div class="stat-badge">10天行程</div>
-                <div class="stat-badge">5个城市</div>
-                <div class="stat-badge">650公里</div>
+            <h1 id="trip-header-title">🗺️ 旅行可视化</h1>
+            <p id="trip-header-subtitle">点击右上角"我的行程"选择或创建行程</p>
+            <div class="header-stats" id="trip-header-stats" style="display: none;">
+                <div class="stat-badge" id="stat-days"></div>
+                <div class="stat-badge" id="stat-destination"></div>
+                <div class="stat-badge" id="stat-activities"></div>
             </div>
         </div>
         
@@ -126,6 +126,6 @@
     <script src="js/map/RouteManager.js?v=20250805e"></script>
     <!-- Core modules -->
     <script src="js/timeline.js?v=20250806b"></script>
-    <script src="js/app.js?v=20250806d"></script>
+    <script src="js/app.js?v=20250806e"></script>
 </body>
 </html>

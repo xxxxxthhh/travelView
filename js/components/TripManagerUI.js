@@ -251,6 +251,11 @@ class TripManagerUI {
       const trips = await this.dataManager.loadUserTrips(user.id);
       this.trips = trips;
 
+      if (this.currentTrip) {
+        const refreshedCurrent = this.trips.find(trip => trip.id === this.currentTrip.id);
+        this.currentTrip = refreshedCurrent || null;
+      }
+
       this.renderTripList();
       this.logger.info('Trips loaded', { count: trips.length });
     } catch (error) {
@@ -370,7 +375,8 @@ class TripManagerUI {
 
       if (tripId) {
         // Update existing trip
-        await this.dataManager.updateTrip(tripId, tripData);
+        const updatedTrip = await this.dataManager.updateTrip(tripId, tripData);
+        this.currentTrip = updatedTrip;
         this.showMessage('行程已更新', 'success');
       } else {
         // Create new trip
@@ -385,9 +391,13 @@ class TripManagerUI {
       this.closeTripEditor();
       await this.loadTrips();
 
+      if (!this.currentTrip && this.trips.length > 0) {
+        this.currentTrip = this.trips[0];
+      }
+
       // Notify app of trip change
       if (window.travelApp && window.travelApp.onTripChanged) {
-        window.travelApp.onTripChanged(this.currentTrip);
+        await window.travelApp.onTripChanged(this.currentTrip);
       }
     } catch (error) {
       this.logger.error('Failed to save trip', error);
@@ -425,7 +435,7 @@ class TripManagerUI {
       if (this.currentTrip?.id === tripId) {
         this.currentTrip = null;
         if (window.travelApp && window.travelApp.onTripChanged) {
-          window.travelApp.onTripChanged(null);
+          await window.travelApp.onTripChanged(null);
         }
       }
 

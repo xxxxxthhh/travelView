@@ -328,7 +328,24 @@ class TravelApp {
    * Center map on trip activities
    */
   centerMapOnTrip(tripData) {
-    if (!this.mapManager || !this.mapManager.map) return;
+    this.logger.info('centerMapOnTrip called');
+
+    // Check if map is available
+    if (!this.mapManager) {
+      this.logger.warn('MapManager not available, skipping map centering');
+      return;
+    }
+
+    if (!this.mapManager.map) {
+      this.logger.warn('Map not initialized, skipping map centering');
+      return;
+    }
+
+    // Check if Google Maps API is available
+    if (typeof google === 'undefined' || !google.maps) {
+      this.logger.warn('Google Maps API not loaded, skipping map centering');
+      return;
+    }
 
     // Collect all activity coordinates
     const coordinates = [];
@@ -338,6 +355,7 @@ class TravelApp {
           day.activities.forEach(activity => {
             if (activity.location && activity.location.lat && activity.location.lng) {
               coordinates.push(activity.location);
+              this.logger.debug('Added coordinate:', activity.location);
             }
           });
         }
@@ -349,31 +367,43 @@ class TravelApp {
       return;
     }
 
-    // Create bounds from coordinates
-    const bounds = new google.maps.LatLngBounds();
-    coordinates.forEach(coord => {
-      bounds.extend(new google.maps.LatLng(coord.lat, coord.lng));
-    });
+    this.logger.info(`Found ${coordinates.length} coordinates, recentering map`);
 
-    // Fit map to bounds
-    this.mapManager.map.fitBounds(bounds);
+    try {
+      // Create bounds from coordinates
+      const bounds = new google.maps.LatLngBounds();
+      coordinates.forEach(coord => {
+        bounds.extend(new google.maps.LatLng(coord.lat, coord.lng));
+      });
 
-    // Add padding for better visualization
-    const padding = { top: 50, right: 50, bottom: 50, left: 50 };
-    this.mapManager.map.fitBounds(bounds, padding);
+      // Fit map to bounds
+      this.mapManager.map.fitBounds(bounds);
 
-    this.logger.info(`Map centered on ${coordinates.length} activity locations`);
+      // Add padding for better visualization
+      const padding = { top: 50, right: 50, bottom: 50, left: 50 };
+      this.mapManager.map.fitBounds(bounds, padding);
+
+      this.logger.info(`✅ Map centered on ${coordinates.length} activity locations`);
+    } catch (error) {
+      this.logger.error('Failed to center map:', error);
+    }
   }
 
   /**
    * Render all markers for trip activities
    */
   renderAllMarkers(tripData) {
-    if (!this.mapManager || !tripData.days) return;
+    if (!this.mapManager || !tripData.days) {
+      this.logger.warn('Cannot render markers: mapManager or tripData.days not available');
+      return;
+    }
+
+    this.logger.info('Rendering all markers for trip');
 
     let totalMarkers = 0;
     tripData.days.forEach((day, index) => {
       if (day.activities && day.activities.length > 0) {
+        this.logger.debug(`Rendering markers for day ${day.day}:`, day.activities.length);
         // Render markers for this day
         if (this.mapManager.markerManager) {
           // Show all days' markers
@@ -383,7 +413,7 @@ class TravelApp {
       }
     });
 
-    this.logger.info(`Rendered ${totalMarkers} markers for trip`);
+    this.logger.info(`✅ Rendered ${totalMarkers} markers for trip`);
   }
 
   checkApiKeyStatus() {

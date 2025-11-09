@@ -17,6 +17,7 @@ class RouteEditorUI {
 
     // Activity editor modal
     this.activityEditorModal = null;
+    this.dayEditorModal = null;
 
     this.logger.info('RouteEditorUI initialized');
   }
@@ -32,6 +33,11 @@ class RouteEditorUI {
     if (window.ActivityEditorModal) {
       this.activityEditorModal = new ActivityEditorModal(this);
       this.activityEditorModal.init();
+    }
+
+    if (window.DayEditorModal) {
+      this.dayEditorModal = new DayEditorModal(this);
+      this.dayEditorModal.init();
     }
 
     this.logger.info('RouteEditorUI setup complete');
@@ -226,6 +232,7 @@ class RouteEditorUI {
    * Add edit controls to timeline
    */
   addEditControls() {
+    this.removeEditControls();
     const timeline = document.querySelector('.timeline-content');
     if (!timeline) return;
 
@@ -325,16 +332,37 @@ class RouteEditorUI {
    * Add a new day
    */
   async addDay() {
-    // TODO: Show modal to input day details
-    this.showMessage('添加新一天的功能即将推出', 'info');
+    if (!this.dayEditorModal) {
+      this.showMessage('当前无法编辑天数', 'error');
+      return;
+    }
+
+    const nextDayNumber = (this.tripData?.days?.length || 0) + 1;
+    const defaultDate = this.getDefaultDateForDay(nextDayNumber);
+    this.dayEditorModal.showAdd(nextDayNumber, defaultDate);
   }
 
   /**
    * Edit a day
    */
   async editDay(dayNumber) {
-    // TODO: Show modal to edit day details
-    this.showMessage(`编辑第${dayNumber}天的功能即将推出`, 'info');
+    if (!this.dayEditorModal) {
+      this.showMessage('当前无法编辑天数', 'error');
+      return;
+    }
+
+    if (!this.tripData || !Array.isArray(this.tripData.days)) {
+      this.showMessage('暂无行程数据可以编辑', 'warning');
+      return;
+    }
+
+    const dayData = this.tripData.days.find(day => day.day === dayNumber);
+    if (!dayData) {
+      this.showMessage(`未找到第${dayNumber}天`, 'error');
+      return;
+    }
+
+    this.dayEditorModal.showEdit(dayNumber, dayData);
   }
 
   /**
@@ -345,8 +373,12 @@ class RouteEditorUI {
       return;
     }
 
-    // TODO: Implement delete day
-    this.showMessage('删除天的功能即将推出', 'info');
+    try {
+      await this.removeDay(dayNumber);
+    } catch (error) {
+      this.logger.error('Failed to delete day', error);
+      this.showMessage(error.message || '删除失败，请稍后再试', 'error');
+    }
   }
 
   /**
@@ -485,6 +517,16 @@ class RouteEditorUI {
     this.logger.info('Saving changes', { tripId: this.currentTripId });
 
     try {
+      this.normalizeDays();
+
+      if (!this.routeData) {
+        this.routeData = { routes: [], returnRoute: null };
+      }
+
+      if (!Array.isArray(this.routeData.routes)) {
+        this.routeData.routes = [];
+      }
+
       // Save trip data
       await this.dataManager.saveTripData(this.currentTripId, this.tripData);
 
@@ -603,41 +645,13 @@ class RouteEditorUI {
    * Add first day to trip
    */
   async addFirstDay() {
-    if (!this.tripData) {
-      this.logger.error('No trip data available');
+    if (!this.dayEditorModal) {
+      this.showMessage('当前无法编辑天数', 'error');
       return;
     }
 
-    // Initialize days array if needed
-    if (!this.tripData.days) {
-      this.tripData.days = [];
-    }
-
-    // Get trip start date or use today
-    const trip = this.tripManagerUI.trips.find(t => t.id === this.currentTripId);
-    const startDate = trip && trip.start_date ? new Date(trip.start_date) : new Date();
-    const dateStr = startDate.toISOString().split('T')[0];
-
-    // Create first day
-    const firstDay = {
-      day: 1,
-      date: dateStr,
-      activities: []
-    };
-
-    this.tripData.days.push(firstDay);
-    this.logger.info('First day added', firstDay);
-
-    // Save to database
-    try {
-      await this.saveChanges();
-      this.showMessage('第一天已添加', 'success');
-    } catch (error) {
-      this.logger.error('Failed to add first day', error);
-      // Rollback
-      this.tripData.days.pop();
-      this.showMessage('添加失败，请稍后再试', 'error');
-    }
+    const defaultDate = this.getDefaultDateForDay(1);
+    this.dayEditorModal.showAdd(1, defaultDate);
   }
 
   /**
@@ -649,6 +663,193 @@ class RouteEditorUI {
       emptyState.remove();
       this.logger.info('Empty state hidden');
     }
+  }
+
+  /**
+   * Create a new day entry and persist
+   */
+  async createDay(dayPayload) {
+    if (!this.tripData) {
+      this.tripData = {};
+    }
+
+    if (!Array.isArray(this.tripData.days)) {
+      this.tripData.days = [];
+    }
+
+    const newDay = {
+      day: dayPayload.day,
+      date: dayPayload.date,
+      title: dayPayload.title || '',
+      weather: dayPayload.weather || '',
+      notes: dayPayload.notes || '',
+      accommodation: dayPayload.accommodation || null,
+      activities: []
+    };
+
+    this.tripData.days.push(newDay);
+    this.normalizeDays();
+
+    try {
+      this.hideEmptyState();
+      await this.saveChanges();
+    } catch (error) {
+      this.logger.error('Failed to create day', error);
+      this.tripData.days = this.tripData.days.filter(day => day !== newDay);
+      this.normalizeDays();
+      if (!this.tripData.days.length) {
+        this.showEmptyState();
+        if (this.isEditMode) {
+          this.showAddFirstDayButton();
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Update an existing day
+   */
+  async updateDay(dayNumber, dayPayload) {
+    if (!this.tripData || !Array.isArray(this.tripData.days)) {
+      throw new Error('暂无行程数据可以编辑');
+    }
+
+    const dayIndex = this.tripData.days.findIndex(day => day.day === dayNumber);
+    if (dayIndex === -1) {
+      throw new Error(`未找到第${dayNumber}天`);
+    }
+
+    const targetDay = this.tripData.days[dayIndex];
+    targetDay.date = dayPayload.date;
+    targetDay.title = dayPayload.title || '';
+    targetDay.weather = dayPayload.weather || '';
+    targetDay.notes = dayPayload.notes || '';
+    targetDay.accommodation = dayPayload.accommodation || null;
+
+    try {
+      await this.saveChanges();
+    } catch (error) {
+      this.logger.error('Failed to update day', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Remove a day from the trip
+   */
+  async removeDay(dayNumber) {
+    if (!this.tripData || !Array.isArray(this.tripData.days)) {
+      throw new Error('暂无行程数据可以删除');
+    }
+
+    const dayIndex = this.tripData.days.findIndex(day => day.day === dayNumber);
+    if (dayIndex === -1) {
+      throw new Error(`未找到第${dayNumber}天`);
+    }
+
+    const removedDay = this.tripData.days.splice(dayIndex, 1)[0];
+    const previousRoutes = this.routeData && Array.isArray(this.routeData.routes)
+      ? JSON.parse(JSON.stringify(this.routeData.routes))
+      : null;
+
+    if (this.routeData && Array.isArray(this.routeData.routes)) {
+      this.routeData.routes = this.routeData.routes
+        .filter(route => route.day !== dayNumber)
+        .map(route => ({
+          ...route,
+          day: route.day > dayNumber ? route.day - 1 : route.day
+        }));
+    }
+
+    this.normalizeDays();
+
+    try {
+      if (this.tripData.days.length === 0) {
+        this.showEmptyState();
+        if (this.isEditMode) {
+          this.showAddFirstDayButton();
+        }
+      }
+
+      await this.saveChanges();
+    } catch (error) {
+      this.logger.error('Failed to remove day', error);
+
+      // Rollback trip days
+      this.tripData.days.splice(dayIndex, 0, removedDay);
+      this.normalizeDays();
+
+      if (previousRoutes) {
+        this.routeData.routes = previousRoutes;
+      }
+
+      throw error;
+    }
+  }
+
+  /**
+   * Calculate default date for a day number
+   */
+  getDefaultDateForDay(dayNumber) {
+    if (this.tripData && Array.isArray(this.tripData.days)) {
+      const existingDay = this.tripData.days.find(day => day.day === dayNumber);
+      if (existingDay && existingDay.date) {
+        return existingDay.date.substring(0, 10);
+      }
+
+      if (this.tripData.days.length > 0) {
+        const sortedDays = [...this.tripData.days].sort((a, b) => (a.day || 0) - (b.day || 0));
+        const lastDay = sortedDays[sortedDays.length - 1];
+        if (lastDay?.date) {
+          const nextDate = new Date(lastDay.date);
+          if (!isNaN(nextDate.getTime())) {
+            nextDate.setDate(nextDate.getDate() + 1);
+            return nextDate.toISOString().split('T')[0];
+          }
+        }
+      }
+    }
+
+    const trip = this.tripManagerUI?.trips?.find(t => t.id === this.currentTripId);
+    if (trip && trip.start_date) {
+      const startDate = new Date(trip.start_date);
+      if (!isNaN(startDate.getTime())) {
+        startDate.setDate(startDate.getDate() + (dayNumber - 1));
+        return startDate.toISOString().split('T')[0];
+      }
+    }
+
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  }
+
+  /**
+   * Ensure days are sequential and structured
+   */
+  normalizeDays() {
+    if (!this.tripData || !Array.isArray(this.tripData.days)) {
+      return;
+    }
+
+    this.tripData.days.sort((a, b) => (a.day || 0) - (b.day || 0));
+    this.tripData.days.forEach((day, index) => {
+      day.day = index + 1;
+      if (!Array.isArray(day.activities)) {
+        day.activities = [];
+      }
+      if (day.accommodation && day.accommodation.location) {
+        const { lat, lng } = day.accommodation.location;
+        const latNum = typeof lat === 'number' ? lat : parseFloat(lat);
+        const lngNum = typeof lng === 'number' ? lng : parseFloat(lng);
+
+        if (!isNaN(latNum) && !isNaN(lngNum)) {
+          day.accommodation.location = { lat: latNum, lng: lngNum };
+        } else {
+          delete day.accommodation.location;
+        }
+      }
+    });
   }
 }
 

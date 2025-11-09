@@ -437,6 +437,8 @@ class DataManager {
                 days: (days || []).map(day => ({
                     day: day.day_number,
                     date: day.date,
+                    title: day.title || '',
+                    ...this.parseDayNotes(day.notes),
                     activities: (day.activities || [])
                         .sort((a, b) => a.order_index - b.order_index)
                         .map(act => ({
@@ -519,15 +521,29 @@ class DataManager {
                 .delete()
                 .eq('trip_id', tripId);
 
+            const daysToSave = Array.isArray(tripData.days) ? [...tripData.days] : [];
+            daysToSave.sort((a, b) => (a.day || 0) - (b.day || 0));
+
             // Insert days and activities
-            for (const dayData of tripData.days) {
+            for (let index = 0; index < daysToSave.length; index++) {
+                const dayData = daysToSave[index];
+                const dayNumber = index + 1;
+
+                const notesPayload = {
+                    weather: dayData.weather || '',
+                    notes: dayData.notes || '',
+                    accommodation: this.prepareAccommodationForStorage(dayData.accommodation)
+                };
+
                 // Insert day
                 const { data: day, error: dayError } = await supabase
                     .from('days')
                     .insert({
                         trip_id: tripId,
-                        day_number: dayData.day,
-                        date: dayData.date
+                        day_number: dayNumber,
+                        date: dayData.date || null,
+                        title: dayData.title || null,
+                        notes: JSON.stringify(notesPayload)
                     })
                     .select()
                     .single();
@@ -536,18 +552,25 @@ class DataManager {
 
                 // Insert activities
                 if (dayData.activities && dayData.activities.length > 0) {
-                    const activities = dayData.activities.map((act, index) => ({
-                        day_id: day.id,
-                        time: act.time,
-                        type: act.type,
-                        description: act.description,
-                        location: act.location,
-                        order_index: index,
-                        metadata: {
-                            icon: act.icon,
-                            ...act
+                    const activities = dayData.activities.map((act, index) => {
+                        const locationPayload = this.prepareLocationForStorage(act.location);
+                        if (!locationPayload) {
+                            throw new Error(`活动 "${act.description}" 缺少有效的地点坐标`);
                         }
-                    }));
+
+                        return {
+                            day_id: day.id,
+                            time: act.time,
+                            type: act.type,
+                            description: act.description,
+                            location: locationPayload,
+                            order_index: index,
+                            metadata: {
+                                icon: act.icon,
+                                ...act
+                            }
+                        };
+                    });
 
                     const { error: actError } = await supabase
                         .from('activities')
@@ -642,6 +665,102 @@ class DataManager {
             entertainment: '🎉'
         };
         return icons[type] || '📍';
+    }
+
+    /**
+     * Helper: Parse day notes stored as JSON
+     */
+    parseDayNotes(notes) {
+        if (!notes) {
+            return { weather: '', notes: '', accommodation: null };
+        }
+
+        try {
+            const parsed = typeof notes === 'string' ? JSON.parse(notes) : notes;
+            const accommodation = parsed.accommodation ? this.prepareAccommodationForStorage(parsed.accommodation) : null;
+
+            if (accommodation && accommodation.location) {
+                const { lat, lng } = accommodation.location;
+                const latNum = typeof lat === 'number' ? lat : parseFloat(lat);
+                const lngNum = typeof lng === 'number' ? lng : parseFloat(lng);
+                if (!isNaN(latNum) && !isNaN(lngNum)) {
+                    accommodation.location = { lat: latNum, lng: lngNum };
+                } else {
+                    delete accommodation.location;
+                }
+            }
+
+            return {
+                weather: parsed.weather || '',
+                notes: parsed.notes || '',
+                accommodation
+            };
+        } catch (error) {
+            this.logger.warn('Failed to parse day notes, treating as plain text', error);
+            return { weather: '', notes: notes || '', accommodation: null };
+        }
+    }
+
+    /**
+     * Helper: Prepare accommodation object for storage
+     */
+    prepareAccommodationForStorage(accommodation) {
+        if (!accommodation) return null;
+
+        const result = {};
+
+        if (accommodation.name) {
+            result.name = accommodation.name;
+        }
+
+        if (accommodation.address) {
+            result.address = accommodation.address;
+        }
+
+        if (accommodation.location) {
+            const lat = typeof accommodation.location.lat === 'number'
+                ? accommodation.location.lat
+                : parseFloat(accommodation.location.lat);
+            const lng = typeof accommodation.location.lng === 'number'
+                ? accommodation.location.lng
+                : parseFloat(accommodation.location.lng);
+
+            if (!isNaN(lat) && !isNaN(lng)) {
+                result.location = { lat, lng };
+            }
+        }
+
+        return Object.keys(result).length > 0 ? result : null;
+    }
+
+    /**
+     * Helper: Normalize location payload
+     */
+    prepareLocationForStorage(location) {
+        if (!location) return null;
+
+        const lat = typeof location.lat === 'number' ? location.lat : parseFloat(location.lat);
+        const lng = typeof location.lng === 'number' ? location.lng : parseFloat(location.lng);
+
+        if (isNaN(lat) || isNaN(lng)) {
+            return null;
+        }
+
+        const payload = { lat, lng };
+
+        if (location.name) {
+            payload.name = location.name;
+        }
+
+        if (location.address) {
+            payload.address = location.address;
+        }
+
+        if (location.place_id) {
+            payload.place_id = location.place_id;
+        }
+
+        return payload;
     }
 }
 

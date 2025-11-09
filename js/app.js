@@ -160,9 +160,8 @@ class TravelApp {
       const routeData = await this.dataManager.loadRouteDataFromDB(trip.id);
       this.logger.info("Step 2 complete: Route data loaded", { hasData: !!routeData, routesCount: routeData?.routes?.length });
 
-      if (!tripData || !routeData) {
-        this.logger.warn("No data found for trip, using default structure");
-        // Initialize empty trip structure
+      if (!tripData) {
+        this.logger.warn("Trip data not found, initializing empty structure");
         this.tripData = {
           tripInfo: {
             title: trip.title,
@@ -171,14 +170,19 @@ class TravelApp {
           },
           days: []
         };
-        this.routeData = { routes: [], returnRoute: null };
       } else {
         this.tripData = tripData;
+      }
+
+      if (!routeData) {
+        this.logger.warn("Route data not found, using empty routes");
+        this.routeData = { routes: [], returnRoute: null };
+      } else {
         this.routeData = routeData;
       }
 
       this.logger.info("Step 3: Trip data prepared", {
-        daysCount: this.tripData.days.length,
+        daysCount: this.tripData.days?.length || 0,
         routesCount: this.routeData.routes.length
       });
 

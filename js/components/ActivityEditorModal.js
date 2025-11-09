@@ -424,8 +424,13 @@ class ActivityEditorModal {
    * Handle form submission
    */
   async handleSubmit() {
+    this.logger.info('Form submission started');
+
     const form = document.getElementById('activity-editor-form');
-    if (!form) return;
+    if (!form) {
+      this.logger.error('Form not found');
+      return;
+    }
 
     const formData = new FormData(form);
     const time = formData.get('time');
@@ -435,14 +440,19 @@ class ActivityEditorModal {
     let lng = formData.get('lng');
     let placeName = formData.get('placeName');
 
-    // Validate
+    this.logger.debug('Form data collected', { time, type, description, lat, lng, placeName });
+
+    // Validate required fields
     if (!time || !type || !description) {
-      this.showError('请填写所有必填字段');
+      this.logger.warn('Missing required fields', { time, type, description });
+      this.showError('请填写所有必填字段（时间、类型、描述）');
       return;
     }
 
+    // Validate location
     if (!lat || !lng) {
-      this.showError('请选择地点或手动输入坐标');
+      this.logger.warn('Missing location coordinates', { lat, lng });
+      this.showError('❌ 请选择地点或手动输入坐标\n\n提示：\n1. 使用搜索框搜索地点\n2. 或点击"手动输入坐标"');
       return;
     }
 
@@ -451,7 +461,15 @@ class ActivityEditorModal {
     lng = parseFloat(lng);
 
     if (isNaN(lat) || isNaN(lng)) {
-      this.showError('坐标格式不正确');
+      this.logger.error('Invalid coordinates', { lat, lng });
+      this.showError('坐标格式不正确，请重新输入');
+      return;
+    }
+
+    // Validate coordinate ranges
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      this.logger.error('Coordinates out of range', { lat, lng });
+      this.showError('坐标超出有效范围\n纬度: -90 到 90\n经度: -180 到 180');
       return;
     }
 
@@ -468,21 +486,25 @@ class ActivityEditorModal {
       icon: this.getActivityIcon(type)
     };
 
-    this.logger.info('Submitting activity', activity);
+    this.logger.info('Activity object created, submitting...', activity);
 
     try {
       this.showLoading(true);
 
       if (this.mode === 'add') {
+        this.logger.info('Calling addActivity', { day: this.currentDay });
         await this.routeEditorUI.addActivity(this.currentDay, activity);
       } else if (this.mode === 'edit') {
+        this.logger.info('Calling updateActivity', { day: this.currentDay, index: this.currentActivityIndex });
         await this.routeEditorUI.updateActivity(this.currentDay, this.currentActivityIndex, activity);
       }
 
+      this.logger.info('Activity saved successfully');
       this.close();
     } catch (error) {
       this.logger.error('Failed to save activity', error);
-      this.showError('保存失败，请稍后再试');
+      this.showError('保存失败：' + (error.message || '请稍后再试'));
+      console.error('Activity save error:', error);
     } finally {
       this.showLoading(false);
     }
@@ -525,6 +547,16 @@ class ActivityEditorModal {
       errorEl.textContent = message;
       errorEl.style.display = 'block';
     }
+
+    // Also log to console for debugging
+    this.logger.warn('Error shown to user:', message);
+
+    // Scroll error into view
+    setTimeout(() => {
+      if (errorEl) {
+        errorEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, 100);
   }
 
   /**

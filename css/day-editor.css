@@ -1,0 +1,157 @@
+/**
+ * Day Editor Modal Styles
+ */
+
+/* ============================================
+   Form Elements
+   ============================================ */
+.auth-form input[type="date"] {
+  padding: 12px 16px;
+  border: 2px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #1a1a1a;
+  background: white;
+  transition: all 0.3s ease;
+  outline: none;
+  width: 100%;
+}
+
+.auth-form input[type="date"]:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.auth-form textarea {
+  padding: 12px 16px;
+  border: 2px solid #d0d0d0;
+  border-radius: 8px;
+  font-size: 15px;
+  color: #1a1a1a;
+  background: white;
+  transition: all 0.3s ease;
+  outline: none;
+  width: 100%;
+  resize: vertical;
+  min-height: 80px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.auth-form textarea:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* ============================================
+   Form Help Text
+   ============================================ */
+.form-help {
+  margin-top: 6px;
+  font-size: 13px;
+  color: #999999;
+  line-height: 1.4;
+}
+
+/* ============================================
+   Day Number Info Badge
+   ============================================ */
+.day-number-info {
+  padding: 16px;
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  border-radius: 12px;
+  margin-bottom: 16px;
+  border: 2px solid #e0e6ed;
+}
+
+.info-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.badge-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #4a5568;
+}
+
+.badge-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #667eea;
+  background: white;
+  padding: 6px 16px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   Modal Specific Adjustments
+   ============================================ */
+#day-editor-modal .modal-content {
+  max-width: 560px;
+}
+
+#day-editor-modal .modal-body {
+  padding: 24px;
+}
+
+/* ============================================
+   Form Actions
+   ============================================ */
+#day-editor-form .form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+/* ============================================
+   Responsive Design
+   ============================================ */
+@media (max-width: 768px) {
+  #day-editor-modal .modal-content {
+    max-width: 90%;
+    margin: 20px;
+  }
+
+  #day-editor-modal .modal-body {
+    padding: 20px;
+  }
+
+  .day-number-info {
+    padding: 12px;
+  }
+
+  .badge-label {
+    font-size: 14px;
+  }
+
+  .badge-value {
+    font-size: 16px;
+    padding: 4px 12px;
+  }
+
+  #day-editor-form .form-actions {
+    flex-direction: column;
+  }
+
+  #day-editor-form .form-actions button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .info-badge {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .badge-value {
+    width: 100%;
+    text-align: center;
+  }
+}

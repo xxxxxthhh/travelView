@@ -513,55 +513,137 @@ class DataManager {
         }
 
         try {
+            // Validate trip data before saving
+            if (!this.validateTripDataForSave(tripData)) {
+                throw new Error('Invalid trip data format');
+            }
+
             // Delete existing days and activities (cascade will handle activities)
-            await supabase
+            const { error: deleteError } = await supabase
                 .from('days')
                 .delete()
                 .eq('trip_id', tripId);
 
+            if (deleteError) {
+                this.logger.error('Failed to delete existing days', deleteError);
+                throw deleteError;
+            }
+
             // Insert days and activities
-            for (const dayData of tripData.days) {
-                // Insert day
-                const { data: day, error: dayError } = await supabase
-                    .from('days')
-                    .insert({
-                        trip_id: tripId,
-                        day_number: dayData.day,
-                        date: dayData.date
-                    })
-                    .select()
-                    .single();
+            if (tripData.days && tripData.days.length > 0) {
+                for (const dayData of tripData.days) {
+                    // Validate day data
+                    if (!dayData.day || !dayData.date) {
+                        this.logger.warn('Skipping invalid day data', dayData);
+                        continue;
+                    }
 
-                if (dayError) throw dayError;
+                    // Insert day
+                    const { data: day, error: dayError } = await supabase
+                        .from('days')
+                        .insert({
+                            trip_id: tripId,
+                            day_number: dayData.day,
+                            date: dayData.date,
+                            title: dayData.title || null,
+                            notes: dayData.notes || null
+                        })
+                        .select()
+                        .single();
 
-                // Insert activities
-                if (dayData.activities && dayData.activities.length > 0) {
-                    const activities = dayData.activities.map((act, index) => ({
-                        day_id: day.id,
-                        time: act.time,
-                        type: act.type,
-                        description: act.description,
-                        location: act.location,
-                        order_index: index,
-                        metadata: {
-                            icon: act.icon,
-                            ...act
+                    if (dayError) {
+                        this.logger.error('Failed to insert day', { dayNumber: dayData.day, error: dayError });
+                        throw dayError;
+                    }
+
+                    // Insert activities
+                    if (dayData.activities && dayData.activities.length > 0) {
+                        const activities = dayData.activities
+                            .filter(act => this.validateActivityData(act))
+                            .map((act, index) => ({
+                                day_id: day.id,
+                                time: act.time,
+                                type: act.type,
+                                description: act.description,
+                                location: act.location,
+                                order_index: index,
+                                metadata: {
+                                    icon: act.icon,
+                                    ...act
+                                }
+                            }));
+
+                        if (activities.length > 0) {
+                            const { error: actError } = await supabase
+                                .from('activities')
+                                .insert(activities);
+
+                            if (actError) {
+                                this.logger.error('Failed to insert activities', { dayId: day.id, error: actError });
+                                throw actError;
+                            }
                         }
-                    }));
-
-                    const { error: actError } = await supabase
-                        .from('activities')
-                        .insert(activities);
-
-                    if (actError) throw actError;
+                    }
                 }
             }
 
-            this.logger.info('Trip data saved to Supabase', { tripId });
+            this.logger.info('Trip data saved to Supabase', { tripId, daysCount: tripData.days?.length || 0 });
         } catch (error) {
             this.logger.error('Failed to save trip data to Supabase', error);
             throw error;
         }
+    }
+
+    /**
+     * Validate trip data for saving
+     * @param {Object} tripData - Trip data to validate
+     * @returns {boolean}
+     */
+    validateTripDataForSave(tripData) {
+        if (!tripData) {
+            this.logger.error('Trip data is null or undefined');
+            return false;
+        }
+
+        if (!tripData.days || !Array.isArray(tripData.days)) {
+            this.logger.error('Trip data missing days array');
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Validate activity data
+     * @param {Object} activity - Activity data to validate
+     * @returns {boolean}
+     */
+    validateActivityData(activity) {
+        if (!activity) {
+            this.logger.warn('Activity is null or undefined');
+            return false;
+        }
+
+        if (!activity.description) {
+            this.logger.warn('Activity missing description', activity);
+            return false;
+        }
+
+        if (!activity.location || !activity.location.lat || !activity.location.lng) {
+            this.logger.warn('Activity missing valid location', activity);
+            return false;
+        }
+
+        // Validate coordinates
+        const lat = parseFloat(activity.location.lat);
+        const lng = parseFloat(activity.location.lng);
+
+        if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            this.logger.warn('Activity has invalid coordinates', activity);
+            return false;
+        }
+
+        return true;
     }
 
     /**

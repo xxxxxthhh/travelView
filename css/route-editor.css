@@ -151,6 +151,13 @@
   opacity: 1;
 }
 
+/* Always show on mobile devices (touch screens) */
+@media (hover: none) and (pointer: coarse) {
+  .activity-edit-controls {
+    opacity: 1;
+  }
+}
+
 .edit-btn-small {
   width: 28px;
   height: 28px;

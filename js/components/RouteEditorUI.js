@@ -73,16 +73,19 @@ class RouteEditorUI {
     this.tripData = tripData;
     this.routeData = routeData;
 
+    // Hide the edit mode toggle button (no longer needed)
     const toggle = document.getElementById('edit-mode-toggle');
     if (toggle) {
-      toggle.style.display = 'block';
+      toggle.style.display = 'none';
     }
 
-    // Check if trip has no days, show empty state
+    // Check if trip has no days, show empty state with add button
     if (!tripData.days || tripData.days.length === 0) {
       this.showEmptyState();
     } else {
       this.hideEmptyState();
+      // Show permanent add button
+      this.showPermanentAddButton();
     }
   }
 
@@ -230,6 +233,113 @@ class RouteEditorUI {
     // Hide save/cancel buttons
     this.hideEditActions();
   }
+
+  /**
+   * Show permanent add button (always visible, no edit mode needed)
+   */
+  showPermanentAddButton() {
+    const timeline = document.querySelector('.timeline-content');
+    if (!timeline) return;
+
+    // Remove any existing add button
+    const oldBtn = document.querySelector('.add-day-button');
+    if (oldBtn) oldBtn.remove();
+
+    // Add permanent "Add Day" button at the end
+    const addDayBtn = document.createElement('div');
+    addDayBtn.className = 'add-day-button permanent';
+    addDayBtn.innerHTML = `
+      <button class="btn-primary" data-action="add-day">
+        <span>+</span> 添加新一天
+      </button>
+    `;
+    timeline.appendChild(addDayBtn);
+  }
+
+  /**
+   * Update trip date range based on days
+   * Automatically sets trip.start_date and trip.end_date from the earliest and latest day dates
+   */
+  async updateTripDateRange() {
+    if (!this.tripData || !this.tripData.days || this.tripData.days.length === 0) {
+      this.logger.info('No days to update trip date range');
+      return;
+    }
+
+    // Find all dates from days
+    const dates = this.tripData.days
+      .map(day => day.date)
+      .filter(date => date)
+      .sort();
+
+    if (dates.length === 0) {
+      this.logger.info('No dates found in days');
+      return;
+    }
+
+    const startDate = dates[0];
+    const endDate = dates[dates.length - 1];
+
+    // Check if dates have changed
+    const trip = this.tripManagerUI.trips.find(t => t.id === this.currentTripId);
+    if (trip && trip.start_date === startDate && trip.end_date === endDate) {
+      this.logger.info('Trip date range unchanged');
+      return;
+    }
+
+    try {
+      // Update trip in database
+      await this.dataManager.updateTrip(this.currentTripId, {
+        start_date: startDate,
+        end_date: endDate
+      });
+
+      // Update local state
+      if (trip) {
+        trip.start_date = startDate;
+        trip.end_date = endDate;
+      }
+
+      // Update trip header display
+      this.updateTripHeader(startDate, endDate);
+
+      this.logger.info('Trip date range updated', { startDate, endDate });
+    } catch (error) {
+      this.logger.error('Failed to update trip date range', error);
+    }
+  }
+
+  /**
+   * Update trip header to show date range
+   */
+  updateTripHeader(startDate, endDate) {
+    const subtitleEl = document.getElementById('trip-header-subtitle');
+    if (!subtitleEl) {
+      this.logger.warn('trip-header-subtitle element not found');
+      return;
+    }
+
+    // Format dates for display
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '';
+      const date = new Date(dateStr);
+      return `${date.getMonth() + 1}.${date.getDate()}`;
+    };
+
+    // Update the subtitle with date range
+    if (startDate && endDate && startDate !== endDate) {
+      subtitleEl.textContent = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+    } else if (startDate) {
+      subtitleEl.textContent = formatDate(startDate);
+    } else {
+      subtitleEl.textContent = '尚未设置日期';
+    }
+
+    this.logger.info('Trip header updated', { startDate, endDate });
+  }
+
+
+
 
   /**
    * Add edit controls to timeline
@@ -485,8 +595,11 @@ class RouteEditorUI {
         window.travelApp.timeline.updateData(this.tripData);
       }
       
-      // Re-add edit controls
-      this.addEditControls();
+      // Refresh permanent add button
+      this.showPermanentAddButton();
+
+      // Update trip date range
+      await this.updateTripDateRange();
 
       this.showMessage(`第${dayNumber}天已添加`, 'success');
     } catch (error) {
@@ -553,8 +666,11 @@ class RouteEditorUI {
         window.travelApp.timeline.updateData(this.tripData);
       }
       
-      // Re-add edit controls
-      this.addEditControls();
+      // Refresh permanent add button
+      this.showPermanentAddButton();
+
+      // Update trip date range
+      await this.updateTripDateRange();
 
       this.showMessage(`第${dayNumber}天已更新`, 'success');
     } catch (error) {
@@ -615,8 +731,11 @@ class RouteEditorUI {
         window.travelApp.timeline.updateData(this.tripData);
       }
       
-      // Re-add edit controls
-      this.addEditControls();
+      // Refresh permanent add button
+      this.showPermanentAddButton();
+
+      // Update trip date range
+      await this.updateTripDateRange();
 
       this.showMessage(`第${dayNumber}天已删除`, 'success');
     } catch (error) {

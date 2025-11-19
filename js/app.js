@@ -233,6 +233,10 @@ class TravelApp {
       this.logger.info("Step 7: Notifying route editor...");
       if (this.routeEditorUI) {
         this.routeEditorUI.showEditToggle(trip.id, this.tripData, this.routeData);
+        // Update trip header with date range
+        if (trip.start_date || trip.end_date) {
+          this.routeEditorUI.updateTripHeader(trip.start_date, trip.end_date);
+        }
       }
       this.logger.info("Step 7 complete: Route editor notified");
 

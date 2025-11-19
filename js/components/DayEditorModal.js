@@ -38,17 +38,12 @@ class DayEditorModal {
         <div class="modal-body">
           <form id="day-editor-form" class="trip-form">
             <div class="form-group">
-              <label>第几天</label>
-              <input type="text" id="day-editor-number" disabled value="1">
-            </div>
-
-            <div class="form-group">
               <label for="day-date">日期 *</label>
               <input type="date" id="day-date" name="date" required>
             </div>
 
             <div class="form-group">
-              <label for="day-title">当天标题</label>
+              <label for="day-title">本日主题</label>
               <input type="text" id="day-title" name="title" placeholder="例如：京都文化探索日">
             </div>
 
@@ -153,9 +148,6 @@ class DayEditorModal {
     const title = document.getElementById('day-editor-title');
     if (title) title.textContent = `添加第${dayNumber}天`;
 
-    const numberInput = document.getElementById('day-editor-number');
-    if (numberInput) numberInput.value = dayNumber;
-
     this.resetForm();
 
     const dateInput = document.getElementById('day-date');
@@ -173,9 +165,6 @@ class DayEditorModal {
 
     const title = document.getElementById('day-editor-title');
     if (title) title.textContent = `编辑第${dayNumber}天`;
-
-    const numberInput = document.getElementById('day-editor-number');
-    if (numberInput) numberInput.value = dayNumber;
 
     this.resetForm();
     this.populateForm(dayData);

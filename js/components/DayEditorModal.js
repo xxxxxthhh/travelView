@@ -13,6 +13,7 @@ class DayEditorModal {
     this.mode = 'add';
     this.dayNumber = null;
     this.existingDayData = null;
+    this.placeSearch = null; // Google Places Autocomplete instance
 
     this.logger.info('DayEditorModal initialized');
   }
@@ -68,18 +69,43 @@ class DayEditorModal {
             </div>
 
             <div class="form-group">
-              <label for="day-accommodation-address">住宿地址</label>
-              <input type="text" id="day-accommodation-address" name="accommodation-address" placeholder="住宿的详细地址（可选）">
+              <label>📍 住宿地址</label>
+              <div class="place-search-container">
+                <input type="text" id="day-accommodation-address" name="accommodation-address"
+                       placeholder="🔍 搜索住宿地点..."
+                       autocomplete="off">
+                <div class="place-search-help">
+                  输入地点名称，选择建议项自动获取坐标
+                </div>
+              </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label for="day-accommodation-lat">住宿纬度</label>
-                <input type="number" step="0.000001" min="-90" max="90" id="day-accommodation-lat" name="accommodation-lat" placeholder="可选">
+            <div class="selected-place" id="day-selected-place" style="display: none;">
+              <div class="selected-place-header">
+                <span class="selected-place-icon">📍</span>
+                <span class="selected-place-name" id="day-selected-place-name"></span>
               </div>
-              <div class="form-group">
-                <label for="day-accommodation-lng">住宿经度</label>
-                <input type="number" step="0.000001" min="-180" max="180" id="day-accommodation-lng" name="accommodation-lng" placeholder="可选">
+              <div class="selected-place-coords">
+                <span id="day-selected-place-coords"></span>
+              </div>
+            </div>
+
+            <div class="form-group manual-coords" id="day-manual-coords-toggle">
+              <button type="button" class="btn-link" data-action="toggle-day-manual-coords">
+                ⚙️ 手动输入坐标
+              </button>
+            </div>
+
+            <div class="manual-coords-section" id="day-manual-coords-section" style="display: none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="day-accommodation-lat">纬度 (Latitude)</label>
+                  <input type="number" step="0.000001" min="-90" max="90" id="day-accommodation-lat" name="accommodation-lat" placeholder="35.6586">
+                </div>
+                <div class="form-group">
+                  <label for="day-accommodation-lng">经度 (Longitude)</label>
+                  <input type="number" step="0.000001" min="-180" max="180" id="day-accommodation-lng" name="accommodation-lng" placeholder="139.7454">
+                </div>
               </div>
             </div>
 
@@ -105,6 +131,9 @@ class DayEditorModal {
       if (action === 'close-day-editor') {
         e.preventDefault();
         this.close();
+      } else if (action === 'toggle-day-manual-coords') {
+        e.preventDefault();
+        this.toggleManualCoords();
       }
     });
 
@@ -159,6 +188,12 @@ class DayEditorModal {
     if (modal) {
       modal.classList.add('active');
     }
+
+    // Initialize place search after modal is visible
+    setTimeout(() => {
+      this.initPlaceSearch();
+    }, 100);
+
     this.logger.info('Day editor opened', { mode: this.mode, day: this.dayNumber });
   }
 
@@ -177,6 +212,20 @@ class DayEditorModal {
     if (form) {
       form.reset();
     }
+
+    // Hide selected place
+    const selectedPlaceDiv = document.getElementById('day-selected-place');
+    if (selectedPlaceDiv) selectedPlaceDiv.style.display = 'none';
+
+    // Hide manual coords
+    const manualCoordsSection = document.getElementById('day-manual-coords-section');
+    if (manualCoordsSection) manualCoordsSection.style.display = 'none';
+
+    // Clear place search
+    if (this.placeSearch) {
+      this.placeSearch.clear();
+    }
+
     this.clearError();
   }
 
@@ -271,6 +320,134 @@ class DayEditorModal {
       this.showError(error.message || '保存失败，请稍后再试');
     } finally {
       this.showLoading(false);
+    }
+  }
+
+  /**
+   * Initialize place search for accommodation address
+   */
+  async initPlaceSearch() {
+    const input = document.getElementById('day-accommodation-address');
+    if (!input) return;
+
+    // Check if Maps loader is available
+    if (!window.googleMapsLoader) {
+      this.logger.warn('Google Maps loader not available');
+      this.showManualCoordsMode();
+      return;
+    }
+
+    // Check if Maps is already loaded
+    if (window.googleMapsLoader.isAvailable()) {
+      this.logger.info('Google Maps already loaded, initializing place search');
+      this.initPlaceAutocomplete(input);
+      return;
+    }
+
+    // Try to load Maps API
+    this.logger.info('Waiting for Google Maps API to load...');
+    try {
+      await window.googleMapsLoader.load();
+
+      // Double check Places API is available
+      if (window.google && window.google.maps && window.google.maps.places) {
+        this.logger.info('Google Maps loaded successfully, initializing place search');
+        this.initPlaceAutocomplete(input);
+      } else {
+        this.logger.warn('Google Maps loaded but Places API not available');
+        this.showManualCoordsMode();
+      }
+    } catch (error) {
+      this.logger.warn('Failed to load Google Maps API', error);
+      this.showManualCoordsMode();
+    }
+  }
+
+  /**
+   * Initialize place autocomplete
+   */
+  initPlaceAutocomplete(input) {
+    if (!this.placeSearch) {
+      this.placeSearch = new PlaceSearchInput({
+        inputId: 'day-accommodation-address',
+        onPlaceSelected: (place) => {
+          this.handlePlaceSelected(place);
+        }
+      });
+    }
+
+    this.placeSearch.init(input);
+  }
+
+  /**
+   * Handle place selection from autocomplete
+   */
+  handlePlaceSelected(place) {
+    this.logger.info('Place selected', place);
+
+    // Show selected place
+    const selectedPlaceDiv = document.getElementById('day-selected-place');
+    const placeName = document.getElementById('day-selected-place-name');
+    const placeCoords = document.getElementById('day-selected-place-coords');
+
+    if (selectedPlaceDiv && placeName && placeCoords) {
+      placeName.textContent = place.name;
+      placeCoords.textContent = `${place.lat.toFixed(6)}, ${place.lng.toFixed(6)}`;
+      selectedPlaceDiv.style.display = 'block';
+    }
+
+    // Fill manual coords fields (hidden)
+    const latInput = document.getElementById('day-accommodation-lat');
+    const lngInput = document.getElementById('day-accommodation-lng');
+    const addressInput = document.getElementById('day-accommodation-address');
+    const nameInput = document.getElementById('day-accommodation-name');
+
+    if (latInput) latInput.value = place.lat;
+    if (lngInput) lngInput.value = place.lng;
+    if (addressInput) addressInput.value = place.address;
+    // Auto-fill name if empty
+    if (nameInput && !nameInput.value) {
+      nameInput.value = place.name;
+    }
+
+    this.clearError();
+  }
+
+  /**
+   * Show manual coordinates mode when Google Maps is not available
+   */
+  showManualCoordsMode() {
+    // Hide toggle button
+    const toggleDiv = document.getElementById('day-manual-coords-toggle');
+    if (toggleDiv) {
+      toggleDiv.style.display = 'none';
+    }
+
+    // Show manual coords section
+    const manualSection = document.getElementById('day-manual-coords-section');
+    if (manualSection) {
+      manualSection.style.display = 'block';
+    }
+
+    // Update help text
+    const helpText = document.querySelector('#day-accommodation-address + .place-search-help');
+    if (helpText) {
+      helpText.innerHTML = 'ℹ️ 地图服务暂不可用，请点击下方"手动输入坐标"';
+      helpText.style.color = '#856404';
+    }
+  }
+
+  /**
+   * Toggle manual coords input
+   */
+  toggleManualCoords() {
+    const section = document.getElementById('day-manual-coords-section');
+    if (!section) return;
+
+    if (section.style.display === 'none') {
+      section.style.display = 'block';
+    } else {
+      section.style.display = 'none';
     }
   }
 

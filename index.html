@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,23 +9,19 @@
     <link rel="stylesheet" href="css/main.css?v=20250806f">
     <link rel="stylesheet" href="css/responsive.css?v=20250805b">
     <link rel="stylesheet" href="css/auth.css?v=20250806f">
-    <link rel="stylesheet" href="css/trip-manager.css?v=20250806f">
+    <link rel="stylesheet" href="css/trip-manager.css?v=20250806g">
     <link rel="stylesheet" href="css/route-editor.css?v=20250806f">
     <link rel="stylesheet" href="css/activity-editor.css?v=20250806j">
     <link rel="stylesheet" href="css/day-editor.css?v=20250806h">
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1 id="trip-header-title">🗺️ 旅行可视化</h1>
             <p id="trip-header-subtitle">点击右上角"我的行程"选择或创建行程</p>
-            <div class="header-stats" id="trip-header-stats" style="display: none;">
-                <div class="stat-badge" id="stat-days"></div>
-                <div class="stat-badge" id="stat-destination"></div>
-                <div class="stat-badge" id="stat-activities"></div>
-            </div>
         </div>
-        
+
         <div class="main-content">
             <!-- 时间轴容器 -->
             <div class="timeline">
@@ -33,7 +30,7 @@
                     <div>加载行程数据中...</div>
                 </div>
             </div>
-            
+
             <!-- 地图容器 -->
             <div class="map-container">
                 <div id="map">
@@ -50,13 +47,13 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- 路线进度指示器 -->
                 <div id="route-progress" class="route-progress" style="display: none;">
                     <div class="route-progress-icon">🛣️</div>
                     <div class="route-progress-text">路线构建中...</div>
                 </div>
-                
+
                 <!-- 地图图例 -->
                 <div class="map-overlay">
                     <h3>图例</h3>
@@ -77,7 +74,7 @@
                         <span class="legend-text">🏨 住宿休息</span>
                     </div>
                 </div>
-                
+
                 <!-- 路线统计 -->
                 <div class="route-stats">
                     <h4>今日统计</h4>
@@ -127,7 +124,8 @@
     <script src="js/map/MarkerManager.js?v=20250805d"></script>
     <script src="js/map/RouteManager.js?v=20250805e"></script>
     <!-- Core modules -->
-    <script src="js/timeline.js?v=20250806b"></script>
+    <script src="js/timeline.js?v=20250806c"></script>
     <script src="js/app.js?v=20250806e"></script>
 </body>
+
 </html>

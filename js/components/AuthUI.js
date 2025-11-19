@@ -212,14 +212,21 @@ class AuthUI {
    * Close modal
    */
   closeModal() {
+    // Close specific modal if tracked
     if (this.currentModal) {
       const modal = document.getElementById(`${this.currentModal}-modal`);
       if (modal) {
         modal.classList.remove('active');
       }
       this.currentModal = null;
-      this.clearErrors();
     }
+    
+    // Force close any active modals just in case
+    document.querySelectorAll('.modal.active').forEach(modal => {
+      modal.classList.remove('active');
+    });
+    
+    this.clearErrors();
   }
 
   /**

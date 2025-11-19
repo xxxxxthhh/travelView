@@ -435,6 +435,7 @@ class DataManager {
                     duration: this.calculateDuration(trip.start_date, trip.end_date)
                 },
                 days: (days || []).map(day => ({
+                    id: day.id,
                     day: day.day_number,
                     date: day.date,
                     title: day.title || '',
@@ -442,6 +443,7 @@ class DataManager {
                     activities: (day.activities || [])
                         .sort((a, b) => a.order_index - b.order_index)
                         .map(act => ({
+                            id: act.id,
                             time: act.time,
                             type: act.type,
                             description: act.description,
@@ -501,8 +503,321 @@ class DataManager {
         }
     }
 
+    /* ============================================
+       Granular Persistence Methods
+       ============================================ */
+
     /**
-     * Save trip data to Supabase
+     * Add a new day
+     * @param {string} tripId - Trip ID
+     * @param {Object} dayData - Day data
+     * @returns {Promise<Object>}
+     */
+    async addDay(tripId, dayData) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) throw new Error('Supabase not available');
+
+        try {
+            const { data, error } = await supabase
+                .from('days')
+                .insert({
+                    trip_id: tripId,
+                    day_number: dayData.day,
+                    date: dayData.date,
+                    title: dayData.title || null,
+                    notes: dayData.notes || null
+                })
+                .select()
+                .single();
+
+            if (error) throw error;
+            this.logger.info('Day added', { dayId: data.id });
+            return data;
+        } catch (error) {
+            this.logger.error('Failed to add day', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update an existing day
+     * @param {string} dayId - Day ID (database ID) or Trip ID + Day Number (if we don't have ID)
+     * @param {Object} dayData - Day data to update
+     * @returns {Promise<Object>}
+     */
+    async updateDay(tripId, dayNumber, dayData) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) throw new Error('Supabase not available');
+
+        try {
+            // First find the day ID using trip_id and day_number
+            const { data: day, error: findError } = await supabase
+                .from('days')
+                .select('id')
+                .eq('trip_id', tripId)
+                .eq('day_number', dayNumber)
+                .single();
+
+            if (findError) throw findError;
+
+            const updates = {
+                date: dayData.date,
+                title: dayData.title || null,
+                notes: dayData.notes || null
+            };
+
+            const { data, error } = await supabase
+                .from('days')
+                .update(updates)
+                .eq('id', day.id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            this.logger.info('Day updated', { dayId: day.id });
+            return data;
+        } catch (error) {
+            this.logger.error('Failed to update day', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete a day
+     * @param {string} tripId - Trip ID
+     * @param {number} dayNumber - Day number to delete
+     * @returns {Promise<void>}
+     */
+    async deleteDay(tripId, dayNumber) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) throw new Error('Supabase not available');
+
+        try {
+            // 1. Find the day to delete
+            const { data: dayToDelete, error: findError } = await supabase
+                .from('days')
+                .select('id')
+                .eq('trip_id', tripId)
+                .eq('day_number', dayNumber)
+                .single();
+
+            if (findError) throw findError;
+
+            // 2. Delete the day (cascade will delete activities)
+            const { error: deleteError } = await supabase
+                .from('days')
+                .delete()
+                .eq('id', dayToDelete.id);
+
+            if (deleteError) throw deleteError;
+
+            // 3. Reorder remaining days
+            // This is a bit complex in SQL, might be easier to just update the remaining days one by one
+            // or call a stored procedure if we had one. For now, let's fetch and update.
+            const { data: remainingDays, error: fetchError } = await supabase
+                .from('days')
+                .select('id, day_number')
+                .eq('trip_id', tripId)
+                .gt('day_number', dayNumber)
+                .order('day_number', { ascending: true });
+
+            if (!fetchError && remainingDays && remainingDays.length > 0) {
+                for (const day of remainingDays) {
+                    await supabase
+                        .from('days')
+                        .update({ day_number: day.day_number - 1 })
+                        .eq('id', day.id);
+                }
+            }
+
+            this.logger.info('Day deleted and reordered', { dayNumber });
+        } catch (error) {
+            this.logger.error('Failed to delete day', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Add a new activity
+     * @param {string} tripId - Trip ID
+     * @param {number} dayNumber - Day number
+     * @param {Object} activityData - Activity data
+     * @returns {Promise<Object>}
+     */
+    async addActivity(tripId, dayNumber, activityData) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) throw new Error('Supabase not available');
+
+        try {
+            // Find day ID
+            const { data: day, error: findError } = await supabase
+                .from('days')
+                .select('id')
+                .eq('trip_id', tripId)
+                .eq('day_number', dayNumber)
+                .single();
+
+            if (findError) throw findError;
+
+            // Prepare activity data
+            const activity = {
+                day_id: day.id,
+                time: activityData.time,
+                type: activityData.type,
+                description: activityData.description,
+                location: this.prepareLocationForStorage(activityData.location),
+                order_index: activityData.order_index || 0, // Should calculate this properly if not provided
+                metadata: {
+                    icon: activityData.icon,
+                    ...activityData.metadata
+                }
+            };
+
+            const { data, error } = await supabase
+                .from('activities')
+                .insert(activity)
+                .select()
+                .single();
+
+            if (error) throw error;
+            this.logger.info('Activity added', { activityId: data.id });
+            return data;
+        } catch (error) {
+            this.logger.error('Failed to add activity', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Update an activity
+     * @param {string} tripId - Trip ID
+     * @param {number} dayNumber - Day number
+     * @param {number} activityIndex - Activity index (0-based)
+     * @param {Object} activityData - New activity data
+     * @returns {Promise<Object>}
+     */
+    async updateActivity(tripId, dayNumber, activityIndex, activityData) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) throw new Error('Supabase not available');
+
+        try {
+            // Find day ID
+            const { data: day, error: findError } = await supabase
+                .from('days')
+                .select('id')
+                .eq('trip_id', tripId)
+                .eq('day_number', dayNumber)
+                .single();
+
+            if (findError) throw findError;
+
+            // Find activity by order_index
+            // Note: This relies on order_index being consistent. 
+            // A better approach would be to use activity ID, but the UI currently uses indices.
+            const { data: activity, error: findActError } = await supabase
+                .from('activities')
+                .select('id')
+                .eq('day_id', day.id)
+                .eq('order_index', activityIndex)
+                .single();
+
+            if (findActError) throw findActError;
+
+            const updates = {
+                time: activityData.time,
+                type: activityData.type,
+                description: activityData.description,
+                location: this.prepareLocationForStorage(activityData.location),
+                metadata: {
+                    icon: activityData.icon,
+                    ...activityData.metadata
+                }
+            };
+
+            const { data, error } = await supabase
+                .from('activities')
+                .update(updates)
+                .eq('id', activity.id)
+                .select()
+                .single();
+
+            if (error) throw error;
+            this.logger.info('Activity updated', { activityId: data.id });
+            return data;
+        } catch (error) {
+            this.logger.error('Failed to update activity', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Delete an activity
+     * @param {string} tripId - Trip ID
+     * @param {number} dayNumber - Day number
+     * @param {number} activityIndex - Activity index to delete
+     * @returns {Promise<void>}
+     */
+    async deleteActivity(tripId, dayNumber, activityIndex) {
+        const supabase = this.getSupabaseClient();
+        if (!supabase) throw new Error('Supabase not available');
+
+        try {
+            // Find day ID
+            const { data: day, error: findError } = await supabase
+                .from('days')
+                .select('id')
+                .eq('trip_id', tripId)
+                .eq('day_number', dayNumber)
+                .single();
+
+            if (findError) throw findError;
+
+            // Find activity
+            const { data: activity, error: findActError } = await supabase
+                .from('activities')
+                .select('id')
+                .eq('day_id', day.id)
+                .eq('order_index', activityIndex)
+                .single();
+
+            if (findActError) throw findActError;
+
+            // Delete activity
+            const { error: deleteError } = await supabase
+                .from('activities')
+                .delete()
+                .eq('id', activity.id);
+
+            if (deleteError) throw deleteError;
+
+            // Reorder remaining activities
+            const { data: remainingActivities, error: fetchError } = await supabase
+                .from('activities')
+                .select('id, order_index')
+                .eq('day_id', day.id)
+                .gt('order_index', activityIndex)
+                .order('order_index', { ascending: true });
+
+            if (!fetchError && remainingActivities && remainingActivities.length > 0) {
+                for (const act of remainingActivities) {
+                    await supabase
+                        .from('activities')
+                        .update({ order_index: act.order_index - 1 })
+                        .eq('id', act.id);
+                }
+            }
+
+            this.logger.info('Activity deleted and reordered');
+        } catch (error) {
+            this.logger.error('Failed to delete activity', error);
+            throw error;
+        }
+    }
+
+    /**
+     * DEPRECATED: Save trip data to Supabase (Full Overwrite)
+     * Use granular methods instead.
+     * @deprecated
      * @param {string} tripId - Trip ID
      * @param {Object} tripData - Trip data in kansai-trip.json format
      * @returns {Promise<void>}

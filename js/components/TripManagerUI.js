@@ -50,7 +50,34 @@ class TripManagerUI {
     // Create trip editor modal
     this.createTripEditorModal();
 
+    // Create delete confirmation modal
+    this.createDeleteConfirmModal();
+
     this.logger.info('Trip manager UI elements created');
+  }
+
+  /**
+   * Create delete confirmation modal
+   */
+  createDeleteConfirmModal() {
+    const modal = document.createElement('div');
+    modal.className = 'modal delete-modal'; // Added specific class
+    modal.id = 'delete-confirm-modal';
+    modal.innerHTML = `
+      <div class="modal-overlay" data-action="cancel-delete-trip"></div>
+      <div class="modal-content">
+        <div class="modal-body centered-content">
+          <div class="warning-icon">⚠️</div>
+          <h2>确认删除行程？</h2>
+          <p>您确定要删除这个行程吗？<br>此操作无法撤销，所有相关数据都将丢失。</p>
+          <div class="form-actions">
+            <button class="btn-secondary" data-action="cancel-delete-trip">取消</button>
+            <button class="btn-danger" data-action="confirm-delete-trip">确认删除</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
   }
 
   /**
@@ -175,13 +202,23 @@ class TripManagerUI {
         break;
       case 'edit-trip':
         e.preventDefault();
+        e.stopPropagation(); // Prevent triggering select-trip
         const editTripId = e.target.closest('[data-trip-id]')?.dataset.tripId;
         if (editTripId) this.editTrip(editTripId);
         break;
       case 'delete-trip':
         e.preventDefault();
+        e.stopPropagation(); // Prevent triggering select-trip
         const deleteTripId = e.target.closest('[data-trip-id]')?.dataset.tripId;
         if (deleteTripId) this.deleteTrip(deleteTripId);
+        break;
+      case 'confirm-delete-trip':
+        e.preventDefault();
+        this.confirmDeleteTrip();
+        break;
+      case 'cancel-delete-trip':
+        e.preventDefault();
+        this.closeDeleteConfirmModal();
         break;
       case 'select-trip':
         e.preventDefault();
@@ -390,6 +427,11 @@ class TripManagerUI {
 
       this.closeTripEditor();
       await this.loadTrips();
+      
+      // If we just created a new trip, close the panel to let user start editing
+      if (!tripId) {
+        this.closePanel();
+      }
 
       if (!this.currentTrip && this.trips.length > 0) {
         this.currentTrip = this.trips[0];
@@ -418,13 +460,42 @@ class TripManagerUI {
   }
 
   /**
-   * Delete trip
+   * Initiate delete trip (show confirmation)
    */
-  async deleteTrip(tripId) {
-    if (!confirm('确定要删除这个行程吗？此操作无法撤销。')) {
-      return;
-    }
+  deleteTrip(tripId) {
+    this.pendingDeleteTripId = tripId;
+    this.showDeleteConfirmModal();
+  }
 
+  /**
+   * Show delete confirmation modal
+   */
+  showDeleteConfirmModal() {
+    const modal = document.getElementById('delete-confirm-modal');
+    if (modal) {
+      modal.classList.add('active');
+    }
+  }
+
+  /**
+   * Close delete confirmation modal
+   */
+  closeDeleteConfirmModal() {
+    const modal = document.getElementById('delete-confirm-modal');
+    if (modal) {
+      modal.classList.remove('active');
+    }
+    this.pendingDeleteTripId = null;
+  }
+
+  /**
+   * Confirm and execute delete trip
+   */
+  async confirmDeleteTrip() {
+    const tripId = this.pendingDeleteTripId;
+    if (!tripId) return;
+
+    this.closeDeleteConfirmModal();
     this.logger.info('Deleting trip', { tripId });
 
     try {
@@ -450,6 +521,12 @@ class TripManagerUI {
    * Select trip
    */
   async selectTrip(tripId) {
+    // Add authentication check
+    if (!this.authManager.isAuthenticated()) {
+      this.showMessage('请先登录', 'warning');
+      return;
+    }
+
     const trip = this.trips.find(t => t.id === tripId);
     if (!trip) return;
 
@@ -510,11 +587,16 @@ class TripManagerUI {
     const className = type === 'success' ? 'success-message' :
                      type === 'error' ? 'error-message' :
                      'warning-message';
+    
+    const iconContent = type === 'success' ? '✓' :
+                       type === 'error' ? '✕' :
+                       '!';
 
     const messageEl = document.createElement('div');
     messageEl.className = className;
     messageEl.innerHTML = `
       <div class="message-content">
+        <div class="message-icon">${iconContent}</div>
         <span class="message-text">${message}</span>
       </div>
     `;
@@ -542,6 +624,16 @@ class TripManagerUI {
     if (!dateStr) return '';
     const date = new Date(dateStr);
     return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric' });
+  }
+
+  /**
+   * Clear all trip data (e.g. on logout)
+   */
+  clear() {
+    this.currentTrip = null;
+    this.trips = [];
+    this.renderTripList();
+    this.logger.info('Trip data cleared');
   }
 
   /**

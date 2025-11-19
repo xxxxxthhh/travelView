@@ -127,8 +127,7 @@ class TravelApp {
     this.logger.info("Clearing user trips...");
     // Reset to demo data
     if (this.tripManagerUI) {
-      this.tripManagerUI.currentTrip = null;
-      this.tripManagerUI.trips = [];
+      this.tripManagerUI.clear();
     }
     // Hide route editor
     if (this.routeEditorUI) {
@@ -147,6 +146,13 @@ class TravelApp {
       // No trip selected, show demo data
       this.logger.info("No trip selected, loading demo data");
       // TODO: Load demo data
+      return;
+    }
+
+    // Add authentication check
+    if (this.authManager && !this.authManager.isAuthenticated()) {
+      this.logger.warn("User not authenticated, cannot load trip");
+      this.showError("请先登录以查看行程");
       return;
     }
 
@@ -267,12 +273,12 @@ class TravelApp {
     // Get elements
     const titleEl = document.getElementById('trip-header-title');
     const subtitleEl = document.getElementById('trip-header-subtitle');
-    const statsEl = document.getElementById('trip-header-stats');
-    const statDaysEl = document.getElementById('stat-days');
-    const statDestEl = document.getElementById('stat-destination');
-    const statActivitiesEl = document.getElementById('stat-activities');
+    // const statsEl = document.getElementById('trip-header-stats');
+    // const statDaysEl = document.getElementById('stat-days');
+    // const statDestEl = document.getElementById('stat-destination');
+    // const statActivitiesEl = document.getElementById('stat-activities');
 
-    if (!titleEl || !subtitleEl || !statsEl) {
+    if (!titleEl || !subtitleEl) {
       this.logger.warn('Header elements not found');
       return;
     }
@@ -288,26 +294,29 @@ class TravelApp {
       subtitleEl.textContent = '尚未设置日期';
     }
 
+    // Note: Stats are now shown in the trip card in the trip manager panel
+    // No need to duplicate them in the header
+
     // Calculate statistics
-    const daysCount = days.length;
-    let activitiesCount = 0;
-    days.forEach(day => {
-      if (day.activities) {
-        activitiesCount += day.activities.length;
-      }
-    });
+    // const daysCount = days.length;
+    // let activitiesCount = 0;
+    // days.forEach(day => {
+    //   if (day.activities) {
+    //     activitiesCount += day.activities.length;
+    //   }
+    // });
 
     // Update stats
-    if (daysCount > 0) {
-      statDaysEl.textContent = `${daysCount}天行程`;
-      statDestEl.textContent = tripInfo.destination ? `📍 ${tripInfo.destination}` : '未设置目的地';
-      statActivitiesEl.textContent = `${activitiesCount}个活动`;
-      statsEl.style.display = 'flex';
-    } else {
-      statsEl.style.display = 'none';
-    }
+    // if (daysCount > 0) {
+    //   statDaysEl.textContent = `${daysCount}天行程`;
+    //   statDestEl.textContent = tripInfo.destination ? `📍 ${tripInfo.destination}` : '未设置目的地';
+    //   statActivitiesEl.textContent = `${activitiesCount}个活动`;
+    //   statsEl.style.display = 'flex';
+    // } else {
+    //   statsEl.style.display = 'none';
+    // }
 
-    this.logger.info('Page header updated', { title: tripInfo.title, days: daysCount, activities: activitiesCount });
+    this.logger.info('Page header updated', { title: tripInfo.title });
   }
 
   /**
@@ -362,6 +371,13 @@ class TravelApp {
               this.logger.debug('Added coordinate:', activity.location);
             }
           });
+        }
+        
+        // Add accommodation location if available
+        if (day.accommodation && day.accommodation.location && 
+            day.accommodation.location.lat && day.accommodation.location.lng) {
+          coordinates.push(day.accommodation.location);
+          this.logger.debug('Added accommodation coordinate:', day.accommodation.location);
         }
       });
     }

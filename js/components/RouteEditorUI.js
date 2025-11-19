@@ -313,10 +313,9 @@ class RouteEditorUI {
     actions.id = 'edit-actions-bar';
     actions.innerHTML = `
       <div class="edit-actions-content">
-        <span class="edit-mode-indicator">✏️ 编辑模式</span>
+        <span class="edit-mode-indicator">✏️ 编辑模式 (更改自动保存)</span>
         <div class="edit-actions-buttons">
-          <button class="btn-secondary" data-action="cancel-edit">取消</button>
-          <button class="btn-primary" data-action="save-changes">保存更改</button>
+          <button class="btn-primary" data-action="save-changes">完成编辑</button>
         </div>
       </div>
     `;
@@ -359,12 +358,27 @@ class RouteEditorUI {
       }
     }
 
-    // Show day editor modal
-    if (this.dayEditorModal) {
-      const trip = this.tripManagerUI.trips.find(t => t.id === this.currentTripId);
-      this.dayEditorModal.showAdd(trip, suggestedDate);
-    }
+    // Calculate next day number
+  let nextDayNumber = 1;
+  if (this.tripData.days && this.tripData.days.length > 0) {
+    const maxDay = Math.max(...this.tripData.days.map(d => d.day));
+    nextDayNumber = maxDay + 1;
   }
+
+  // Show day editor modal
+  if (!this.dayEditorModal && window.DayEditorModal) {
+    this.dayEditorModal = new DayEditorModal(this);
+    this.dayEditorModal.init();
+  }
+
+  if (this.dayEditorModal) {
+    this.dayEditorModal.showAdd(nextDayNumber, suggestedDate);
+  } else {
+    this.logger.error('DayEditorModal not initialized');
+  }
+}
+
+
 
   /**
    * Add a new day (actual implementation called by DayEditorModal)
@@ -383,26 +397,100 @@ class RouteEditorUI {
     // Calculate day number
     const dayNumber = this.tripData.days.length + 1;
 
-    // Create new day object
-    const newDay = {
-      day: dayNumber,
-      date: dayData.date,
-      title: dayData.title || null,
-      notes: dayData.notes || null,
-      activities: []
-    };
-
-    this.tripData.days.push(newDay);
-    this.logger.info('New day added', newDay);
-
-    // Save to database
     try {
-      await this.saveChanges();
+      // Call granular add method
+      const newDay = await this.dataManager.addDay(this.currentTripId, {
+        day: dayNumber,
+        date: dayData.date,
+        title: dayData.title,
+        notes: dayData.notes
+      });
+
+      // Update local state
+      const localDay = {
+        id: newDay.id,
+        day: dayNumber,
+        date: dayData.date,
+        title: dayData.title || null,
+        notes: dayData.notes || null,
+        activities: []
+      };
+      
+      this.tripData.days.push(localDay);
+      this.logger.info('New day added', localDay);
+
+      // Update UI without reload
+      if (window.travelApp && window.travelApp.timeline) {
+        window.travelApp.timeline.updateData(this.tripData);
+      }
+      
+      // Re-add edit controls
+      this.addEditControls();
+
       this.showMessage(`第${dayNumber}天已添加`, 'success');
     } catch (error) {
       this.logger.error('Failed to add new day', error);
-      // Rollback
-      this.tripData.days.pop();
+      this.showMessage('添加失败，请稍后再试', 'error');
+      throw error;
+    }
+  }
+
+  /**
+   * Create a new day (alias for addDayData with different payload structure)
+   * Used by the new DayEditorModal
+   */
+  async createDay(dayPayload) {
+    // Map the payload from the new DayEditorModal to what addDayData expects
+    // or handle it directly here if it has more fields (like accommodation)
+    
+    if (!this.tripData) {
+      this.logger.error('No trip data available');
+      return;
+    }
+
+    // Initialize days array if needed
+    if (!this.tripData.days) {
+      this.tripData.days = [];
+    }
+
+    // Calculate day number
+    const dayNumber = this.tripData.days.length + 1;
+
+    try {
+      // Call granular add method
+      const newDay = await this.dataManager.addDay(this.currentTripId, {
+        day: dayNumber,
+        date: dayPayload.date,
+        title: dayPayload.title,
+        notes: dayPayload.notes
+      });
+
+      // Update local state - only add once
+      const localDay = {
+        id: newDay.id,
+        day: dayNumber,
+        date: dayPayload.date,
+        title: dayPayload.title || null,
+        weather: dayPayload.weather || null,
+        notes: dayPayload.notes || null,
+        accommodation: dayPayload.accommodation || null,
+        activities: []
+      };
+
+      this.tripData.days.push(localDay);
+      this.logger.info('New day created', localDay);
+
+      // Update UI without reload
+      if (window.travelApp && window.travelApp.timeline) {
+        window.travelApp.timeline.updateData(this.tripData);
+      }
+      
+      // Re-add edit controls
+      this.addEditControls();
+
+      this.showMessage(`第${dayNumber}天已添加`, 'success');
+    } catch (error) {
+      this.logger.error('Failed to create new day', error);
       this.showMessage('添加失败，请稍后再试', 'error');
       throw error;
     }
@@ -446,17 +534,28 @@ class RouteEditorUI {
       return;
     }
 
-    // Update day data
-    const day = this.tripData.days[dayIndex];
-    day.date = dayData.date;
-    day.title = dayData.title || null;
-    day.notes = dayData.notes || null;
-
-    this.logger.info('Day updated', { dayNumber, dayData });
-
-    // Save to database
     try {
-      await this.saveChanges();
+      // Call granular update method
+      await this.dataManager.updateDay(this.currentTripId, dayNumber, dayData);
+
+      // Update local state
+      const day = this.tripData.days[dayIndex];
+      day.date = dayData.date;
+      day.title = dayData.title || null;
+      day.weather = dayData.weather || null;
+      day.notes = dayData.notes || null;
+      day.accommodation = dayData.accommodation || null;
+
+      this.logger.info('Day updated', { dayNumber, dayData });
+
+      // Update UI without reload
+      if (window.travelApp && window.travelApp.timeline) {
+        window.travelApp.timeline.updateData(this.tripData);
+      }
+      
+      // Re-add edit controls
+      this.addEditControls();
+
       this.showMessage(`第${dayNumber}天已更新`, 'success');
     } catch (error) {
       this.logger.error('Failed to update day', error);
@@ -496,7 +595,10 @@ class RouteEditorUI {
     this.logger.info('Deleting day', { dayNumber, activityCount });
 
     try {
-      // Remove the day from array
+      // Call granular delete method
+      await this.dataManager.deleteDay(this.currentTripId, dayNumber);
+
+      // Update local state
       this.tripData.days.splice(dayIndex, 1);
 
       // Recalculate day numbers for remaining days
@@ -508,14 +610,18 @@ class RouteEditorUI {
         totalDays: this.tripData.days.length
       });
 
-      // Save to database
-      await this.saveChanges();
+      // Update UI without reload
+      if (window.travelApp && window.travelApp.timeline) {
+        window.travelApp.timeline.updateData(this.tripData);
+      }
+      
+      // Re-add edit controls
+      this.addEditControls();
+
       this.showMessage(`第${dayNumber}天已删除`, 'success');
     } catch (error) {
       this.logger.error('Failed to delete day', error);
       this.showMessage('删除失败，请稍后再试', 'error');
-      // Note: We don't rollback here as the data is already modified
-      // User would need to refresh to restore
     }
   }
 
@@ -547,11 +653,40 @@ class RouteEditorUI {
       this.tripData.days[dayIndex].activities = [];
     }
 
-    this.tripData.days[dayIndex].activities.push(activity);
-    this.logger.info('Activity added', { dayNumber, activity });
+    try {
+      // Call granular add method
+      const newActivity = await this.dataManager.addActivity(this.currentTripId, dayNumber, activity);
 
-    // Auto-save
-    await this.saveChanges();
+      // Update local state
+      const localActivity = {
+        id: newActivity.id,
+        ...activity
+      };
+      
+      this.tripData.days[dayIndex].activities.push(localActivity);
+      this.logger.info('Activity added', { dayNumber, activity: localActivity });
+
+      // Update UI without reload
+      if (window.travelApp && window.travelApp.timeline) {
+        window.travelApp.timeline.updateData(this.tripData);
+      }
+      
+      // Re-add edit controls
+      this.addEditControls();
+      
+      // Also update map if possible
+      if (window.travelApp && window.travelApp.mapManager) {
+        // This is a bit heavy, but better than full reload
+        // Ideally we would just add one marker
+        window.travelApp.mapManager.clearAllMarkers();
+        window.travelApp.renderAllMarkers(this.tripData);
+      }
+
+      this.showMessage('活动已添加', 'success');
+    } catch (error) {
+      this.logger.error('Failed to add activity', error);
+      this.showMessage('添加失败，请稍后再试', 'error');
+    }
   }
 
   /**
@@ -604,11 +739,39 @@ class RouteEditorUI {
       return;
     }
 
-    day.activities[activityIndex] = activity;
-    this.logger.info('Activity updated', { dayNumber, activityIndex, activity });
+    try {
+      // Call granular update method
+      await this.dataManager.updateActivity(this.currentTripId, dayNumber, activityIndex, activity);
 
-    // Auto-save
-    await this.saveChanges();
+      // Update local state
+      // Preserve ID if it exists
+      const existingId = day.activities[activityIndex].id;
+      day.activities[activityIndex] = {
+        ...activity,
+        id: existingId
+      };
+      
+      this.logger.info('Activity updated', { dayNumber, activityIndex, activity });
+
+      // Update UI without reload
+      if (window.travelApp && window.travelApp.timeline) {
+        window.travelApp.timeline.updateData(this.tripData);
+      }
+      
+      // Re-add edit controls
+      this.addEditControls();
+      
+      // Update map
+      if (window.travelApp && window.travelApp.mapManager) {
+        window.travelApp.mapManager.clearAllMarkers();
+        window.travelApp.renderAllMarkers(this.tripData);
+      }
+
+      this.showMessage('活动已更新', 'success');
+    } catch (error) {
+      this.logger.error('Failed to update activity', error);
+      this.showMessage('更新失败，请稍后再试', 'error');
+    }
   }
 
   /**
@@ -636,15 +799,40 @@ class RouteEditorUI {
       return;
     }
 
-    day.activities.splice(activityIndex, 1);
-    this.logger.info('Activity deleted', { dayNumber, activityIndex });
+    try {
+      // Call granular delete method
+      await this.dataManager.deleteActivity(this.currentTripId, dayNumber, activityIndex);
 
-    // Auto-save
-    await this.saveChanges();
+      // Update local state
+      day.activities.splice(activityIndex, 1);
+      this.logger.info('Activity deleted', { dayNumber, activityIndex });
+
+      // Update UI without reload
+      if (window.travelApp && window.travelApp.timeline) {
+        window.travelApp.timeline.updateData(this.tripData);
+      }
+      
+      // Re-add edit controls
+      this.addEditControls();
+      
+      // Update map
+      if (window.travelApp && window.travelApp.mapManager) {
+        window.travelApp.mapManager.clearAllMarkers();
+        window.travelApp.renderAllMarkers(this.tripData);
+      }
+
+      this.showMessage('活动已删除', 'success');
+    } catch (error) {
+      this.logger.error('Failed to delete activity', error);
+      this.showMessage('删除失败，请稍后再试', 'error');
+    }
   }
 
   /**
    * Save changes to database
+   */
+  /**
+   * Save changes (Routes only, as Trip Data is auto-saved)
    */
   async saveChanges(exitEditMode = false) {
     if (!this.currentTripId) {
@@ -652,11 +840,9 @@ class RouteEditorUI {
       return;
     }
 
-    this.logger.info('Saving changes', { tripId: this.currentTripId });
+    this.logger.info('Saving route changes', { tripId: this.currentTripId });
 
     try {
-      this.normalizeDays();
-
       if (!this.routeData) {
         this.routeData = { routes: [], returnRoute: null };
       }
@@ -665,39 +851,17 @@ class RouteEditorUI {
         this.routeData.routes = [];
       }
 
-      // Save trip data
-      await this.dataManager.saveTripData(this.currentTripId, this.tripData);
-
-      // Save route data
+      // Save route data only
       await this.dataManager.saveRouteData(this.currentTripId, this.routeData);
 
-      this.showMessage('更改已保存', 'success');
-
-      // Reload trip to show changes
-      if (window.travelApp && window.travelApp.onTripChanged) {
-        const trip = this.tripManagerUI.trips.find(t => t.id === this.currentTripId);
-
-        // Store edit mode state before reload
-        const wasInEditMode = this.isEditMode && !exitEditMode;
-
-        await window.travelApp.onTripChanged(trip);
-
-        // Re-enable edit mode controls after reload
-        if (wasInEditMode) {
-          // Wait for DOM to be updated, then restore edit controls
-          this.waitForDOMUpdate().then(() => {
-            this.logger.info('Re-adding edit controls after save');
-            this.addEditControls();
-          });
-        }
-      }
+      this.showMessage('所有更改已保存', 'success');
 
       if (exitEditMode) {
         this.exitEditMode();
       }
     } catch (error) {
-      this.logger.error('Failed to save changes', error);
-      this.showMessage('保存失败，请稍后再试', 'error');
+      this.logger.error('Failed to save route changes', error);
+      this.showMessage('保存路线失败，请稍后再试', 'error');
     }
   }
 
@@ -794,7 +958,15 @@ class RouteEditorUI {
       return;
     }
 
-    const defaultDate = this.getDefaultDateForDay(1);
+    // Calculate default date
+    let defaultDate = null;
+    const trip = this.tripManagerUI?.trips?.find(t => t.id === this.currentTripId);
+    if (trip && trip.start_date) {
+      defaultDate = trip.start_date;
+    } else {
+      defaultDate = new Date().toISOString().split('T')[0];
+    }
+
     this.dayEditorModal.showAdd(1, defaultDate);
   }
 
